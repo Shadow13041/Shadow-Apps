@@ -33,6 +33,7 @@
 
         <activity
             android:name="com.shadowai.app.MainActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="false"
             android:theme="@style/AppTheme" />
 
@@ -50,7 +51,7 @@
         <provider
             android:name="de.shadow13041.shadowbrowser.BrowserContextProvider"
             android:authorities="com.shadow.apps.browser.context"
-            android:exported="true" />
+            android:exported="false" />
 
         <service
             android:name="com.shadow.toolbox.ShadowVpnService"
@@ -62,8 +63,6 @@
         </service>
 
         <activity
-            android:name="com.shadow.apps.features.FeatureActivity"
-            android:exported="false" />
 
     </application>
 </manifest>
