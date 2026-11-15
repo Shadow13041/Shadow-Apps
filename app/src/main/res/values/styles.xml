@@ -46,4 +46,8 @@
         <item name="android:alertDialogTheme">@style/ShadowDialogTheme</item>
     </style>
 
+    <style name="Theme.ShadowToolbox" parent="AppTheme">
+        <item name="android:alertDialogTheme">@style/ShadowDialogTheme</item>
+    </style>
+
 </resources>

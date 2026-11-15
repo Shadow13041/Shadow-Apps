@@ -230,7 +230,7 @@ public class MainActivity extends Activity {
         updateTabButton();
     }
 
-    $replacement    private String displayAddress(String url) {
+    private String displayAddress(String url) {
         if (url == null || url.isEmpty()) return "";
         if (url.startsWith("https://shadow.local")) return "Startseite";
         return url;
@@ -495,7 +495,7 @@ public class MainActivity extends Activity {
         Button button = new Button(this);
         button.setText(text);
         button.setTextSize(accent ? 14 : 20);
-        button.setTextColor(Color.WHITE);
+        button.setTextColor(accent ? Color.rgb(0, 19, 29) : Color.WHITE);
         button.setAllCaps(false);
         button.setMinWidth(0);
         button.setMinimumWidth(0);
