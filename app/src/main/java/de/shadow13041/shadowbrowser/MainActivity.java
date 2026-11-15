@@ -26,6 +26,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.net.URLEncoder;
@@ -68,6 +70,8 @@ public class MainActivity extends Activity {
 
         addressBar = new EditText(this);
         addressBar.setSingleLine(true);
+        addressBar.setLongClickable(false);
+        addressBar.setTextIsSelectable(false);
         addressBar.setTextColor(Color.WHITE);
         addressBar.setHintTextColor(Color.rgb(168, 178, 194));
         addressBar.setHint("Search or enter address");
@@ -80,6 +84,7 @@ public class MainActivity extends Activity {
         GradientDrawable addressBackground = new GradientDrawable();
         addressBackground.setColor(COLOR_SURFACE);
         addressBackground.setCornerRadius(dp(24));
+        addressBackground.setStroke(dp(1), Color.rgb(48, 59, 75));
         addressBar.setBackground(addressBackground);
         addressRow.addView(addressBar, new LinearLayout.LayoutParams(0, dp(46), 1));
 
@@ -87,6 +92,10 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams goParams = new LinearLayout.LayoutParams(dp(54), dp(46));
         goParams.leftMargin = dp(7);
         addressRow.addView(goButton, goParams);
+        Button menuButton = createButton("⋮", false);
+        LinearLayout.LayoutParams menuParams = new LinearLayout.LayoutParams(dp(42), dp(46));
+        menuParams.leftMargin = dp(5);
+        addressRow.addView(menuButton, menuParams);
         root.addView(addressRow);
 
         progressBar = new ProgressBar(this, null,
@@ -112,8 +121,8 @@ public class MainActivity extends Activity {
         backButton = createButton("‹", false);
         forwardButton = createButton("›", false);
         Button homeButton = createButton("⌂", false);
-        Button reloadButton = createButton("⟳", false);
-        tabsButton = createButton("▢ 0", false);
+        Button reloadButton = createButton("↻", false);
+        tabsButton = createButton("▢", false);
         Button newTabButton = createButton("+", true);
 
         addNavigationButton(navigation, backButton);
@@ -128,6 +137,7 @@ public class MainActivity extends Activity {
         setContentView(root);
 
         goButton.setOnClickListener(v -> navigateFromAddressBar());
+        menuButton.setOnClickListener(v -> showBrowserDataMenu());
 
         addressBar.setOnEditorActionListener((view, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_GO
@@ -220,7 +230,114 @@ public class MainActivity extends Activity {
         updateTabButton();
     }
 
-    $replacement    private void updateTabButton() {
+    $replacement    private String displayAddress(String url) {
+        if (url == null || url.isEmpty()) return "";
+        if (url.startsWith("https://shadow.local")) return "Startseite";
+        return url;
+    }
+
+    private void showTabOverview() {
+        if (tabs.isEmpty()) return;
+
+        LinearLayout list = new LinearLayout(this);
+        list.setOrientation(LinearLayout.VERTICAL);
+        list.setPadding(dp(16), dp(8), dp(16), dp(8));
+
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(list);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Registerkarten · " + tabs.size())
+                .setView(scroll)
+                .setNegativeButton("Schließen", null)
+                .setPositiveButton("Neuer Tab", (d, w) -> createTab(BrowserSettings.getHomepage(this)))
+                .create();
+
+        for (int i = 0; i < tabs.size(); i++) {
+            final int tabIndex = i;
+            WebView tab = tabs.get(i);
+            LinearLayout card = new LinearLayout(this);
+            card.setOrientation(LinearLayout.VERTICAL);
+            card.setPadding(dp(14), dp(12), dp(12), dp(12));
+            GradientDrawable cardBg = new GradientDrawable();
+            cardBg.setColor(COLOR_SURFACE);
+            cardBg.setCornerRadius(dp(16));
+            cardBg.setStroke(dp(1), Color.rgb(48, 59, 75));
+            card.setBackground(cardBg);
+
+            String pageTitle = tab.getTitle();
+            if (pageTitle == null || pageTitle.trim().isEmpty()) pageTitle = "Neuer Tab";
+            TextView title = new TextView(this);
+            title.setText(pageTitle);
+            title.setTextColor(Color.WHITE);
+            title.setTextSize(15);
+            title.setTypeface(null, android.graphics.Typeface.BOLD);
+            card.addView(title);
+
+            TextView address = new TextView(this);
+            address.setText(displayAddress(tab.getUrl()));
+            address.setTextColor(Color.rgb(168, 178, 194));
+            address.setTextSize(12);
+            address.setMaxLines(2);
+            LinearLayout.LayoutParams addressLp = new LinearLayout.LayoutParams(-1, -2);
+            addressLp.topMargin = dp(5);
+            card.addView(address, addressLp);
+
+            LinearLayout actions = new LinearLayout(this);
+            actions.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+            Button close = createButton("×", false);
+            Button open = createButton("Öffnen", true);
+            LinearLayout.LayoutParams closeLp = new LinearLayout.LayoutParams(dp(46), dp(40));
+            closeLp.rightMargin = dp(8);
+            actions.addView(close, closeLp);
+            actions.addView(open, new LinearLayout.LayoutParams(dp(94), dp(40)));
+            LinearLayout.LayoutParams actionsLp = new LinearLayout.LayoutParams(-1, -2);
+            actionsLp.topMargin = dp(10);
+            card.addView(actions, actionsLp);
+
+            card.setOnClickListener(v -> {
+                dialog.dismiss();
+                switchTab(tabIndex);
+            });
+            open.setOnClickListener(v -> {
+                dialog.dismiss();
+                switchTab(tabIndex);
+            });
+            close.setOnClickListener(v -> {
+                dialog.dismiss();
+                closeTabAt(tabIndex);
+                if (!tabs.isEmpty()) showTabOverview();
+            });
+
+            LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(-1, -2);
+            cardLp.bottomMargin = dp(10);
+            list.addView(card, cardLp);
+        }
+
+        dialog.show();
+    }
+
+    private void closeTabAt(int index) {
+        if (index < 0 || index >= tabs.size()) return;
+        WebView closing = tabs.get(index);
+        boolean wasCurrent = closing == webView;
+        tabs.remove(index);
+        webContainer.removeView(closing);
+        closing.stopLoading();
+        closing.setWebChromeClient(null);
+        closing.setWebViewClient(null);
+        closing.destroy();
+
+        if (tabs.isEmpty()) {
+            webView = null;
+            createTab(BrowserSettings.getHomepage(this));
+        } else if (wasCurrent) {
+            webView = null;
+            switchTab(Math.min(index, tabs.size() - 1));
+        }
+        updateTabButton();
+    }
+
+    private void updateTabButton() {
         if (tabsButton != null) {
             tabsButton.setText("▢ " + tabs.size());
         }
@@ -267,7 +384,7 @@ public class MainActivity extends Activity {
         }
 
 
-        target.setBackgroundColor(Color.WHITE);
+        target.setBackgroundColor(COLOR_BACKGROUND);
 
         target.setWebViewClient(new WebViewClient() {
             @Override
@@ -377,7 +494,7 @@ public class MainActivity extends Activity {
     private Button createButton(String text, boolean accent) {
         Button button = new Button(this);
         button.setText(text);
-        button.setTextSize(12);
+        button.setTextSize(accent ? 14 : 20);
         button.setTextColor(Color.WHITE);
         button.setAllCaps(false);
         button.setMinWidth(0);
@@ -387,6 +504,7 @@ public class MainActivity extends Activity {
         GradientDrawable background = new GradientDrawable();
         background.setColor(accent ? COLOR_ACCENT : COLOR_SURFACE);
         background.setCornerRadius(dp(18));
+        background.setStroke(dp(1), accent ? COLOR_ACCENT : Color.rgb(48, 59, 75));
         button.setBackground(background);
         return button;
     }
