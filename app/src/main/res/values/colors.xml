@@ -1,0 +1,11 @@
+<resources>
+    <color name="shadow_bg">#0D0D11</color>
+    <color name="shadow_surface">#15151C</color>
+    <color name="shadow_surface_2">#1C1C25</color>
+    <color name="shadow_text">#F4F4F7</color>
+    <color name="shadow_muted">#A7A7B3</color>
+    <color name="shadow_accent">#9A7BFF</color>
+    <color name="shadow_accent_2">#6F55D9</color>
+    <color name="shadow_success">#70D6A3</color>
+    <color name="shadow_warning">#F1C76A</color>
+</resources>

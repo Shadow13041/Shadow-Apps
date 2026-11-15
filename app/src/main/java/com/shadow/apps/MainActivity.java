@@ -11,7 +11,6 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import com.shadow.apps.features.FeatureActivity;
 
 public class MainActivity extends Activity {
     private static final int BG = Color.rgb(12, 15, 24);
@@ -104,8 +103,20 @@ public class MainActivity extends Activity {
 
         card.setContentDescription(name + ". " + description);
         card.setOnClickListener(v -> {
-            Intent intent = new Intent(this, FeatureActivity.class);
-            intent.putExtra(FeatureActivity.EXTRA_FEATURE, feature);
+            Intent intent;
+            switch (feature) {
+                case "toolbox":
+                    intent = new Intent(this, com.shadow.toolbox.MainActivity.class);
+                    break;
+                case "ai":
+                    intent = new Intent(this, com.shadowai.app.MainActivity.class);
+                    break;
+                case "browser":
+                    intent = new Intent(this, de.shadow13041.shadowbrowser.MainActivity.class);
+                    break;
+                default:
+                    return;
+            }
             startActivity(intent);
         });
 
