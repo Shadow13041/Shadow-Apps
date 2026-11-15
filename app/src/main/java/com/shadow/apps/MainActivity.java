@@ -2,21 +2,23 @@ package com.shadow.apps;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.RippleDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-
 public class MainActivity extends Activity {
     private static final int BG = Color.rgb(0, 0, 0);
     private static final int SURFACE = Color.rgb(32, 38, 50);
     private static final int MUTED = Color.rgb(168, 178, 194);
     private static final int ACCENT = Color.rgb(69, 196, 255);
+    private static final int BORDER = Color.rgb(48, 59, 75);
 
     @Override
     protected void onCreate(Bundle state) {
@@ -27,24 +29,29 @@ public class MainActivity extends Activity {
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
         page.setBackgroundColor(BG);
-        page.setPadding(dp(22), dp(34), dp(22), dp(24));
+        page.setPadding(dp(16), dp(20), dp(16), dp(16));
 
-        TextView brand = text("SHADOW", 13, ACCENT, true);
-        brand.setLetterSpacing(0.22f);
+        TextView brand = text("SHADOW", 12, ACCENT, true);
+        brand.setLetterSpacing(0.24f);
         page.addView(brand);
 
-        TextView title = text("Shadow Apps", 32, Color.WHITE, true);
-        LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(-1, -2);
-        tp.topMargin = dp(8);
-        page.addView(title, tp);
+        TextView title = text("Shadow Apps", 29, Color.WHITE, true);
+        LinearLayout.LayoutParams titleParams =
+                new LinearLayout.LayoutParams(-1, -2);
+        titleParams.topMargin = dp(7);
+        page.addView(title, titleParams);
 
-        TextView subtitle = text("Deine Werkzeuge. Ein Zuhause.", 15, MUTED, false);
-        LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(-1, -2);
-        sp.topMargin = dp(5);
-        sp.bottomMargin = dp(28);
-        page.addView(subtitle, sp);
+        TextView subtitle = text("Deine Werkzeuge. Ein Zuhause.", 14, MUTED, false);
+        LinearLayout.LayoutParams subtitleParams =
+                new LinearLayout.LayoutParams(-1, -2);
+        subtitleParams.topMargin = dp(5);
+        subtitleParams.bottomMargin = dp(25);
+        page.addView(subtitle, subtitleParams);
 
         ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(false);
+        scroll.setClipToPadding(false);
+
         LinearLayout cards = new LinearLayout(this);
         cards.setOrientation(LinearLayout.VERTICAL);
 
@@ -61,9 +68,10 @@ public class MainActivity extends Activity {
         TextView footer = text("SHADOW APPS  •  VERSION 1.0", 10,
                 Color.rgb(105, 116, 139), false);
         footer.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams fp = new LinearLayout.LayoutParams(-1, -2);
-        fp.topMargin = dp(18);
-        page.addView(footer, fp);
+        LinearLayout.LayoutParams footerParams =
+                new LinearLayout.LayoutParams(-1, -2);
+        footerParams.topMargin = dp(16);
+        page.addView(footer, footerParams);
 
         com.shadow.apps.ui.SystemBars.apply(page);
         setContentView(page);
@@ -73,33 +81,42 @@ public class MainActivity extends Activity {
                                     String feature, String number) {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(dp(18), dp(17), dp(18), dp(17));
+        card.setPadding(dp(16), dp(16), dp(16), dp(16));
 
-        GradientDrawable shape = new GradientDrawable();
-        shape.setColor(SURFACE);
-        shape.setCornerRadius(dp(18));
-        shape.setStroke(dp(1), Color.rgb(42, 50, 70));
-        card.setBackground(shape);
+        GradientDrawable normal = new GradientDrawable();
+        normal.setColor(SURFACE);
+        normal.setCornerRadius(dp(18));
+        normal.setStroke(dp(1), BORDER);
+
+        if (android.os.Build.VERSION.SDK_INT >= 21) {
+            card.setBackground(new RippleDrawable(
+                    ColorStateList.valueOf(0x3345C4FF), normal, null));
+        } else {
+            card.setBackground(normal);
+        }
+
         card.setClickable(true);
         card.setFocusable(true);
+        card.setMinimumHeight(dp(112));
 
         LinearLayout top = new LinearLayout(this);
         top.setGravity(Gravity.CENTER_VERTICAL);
 
         TextView index = text(number, 12, ACCENT, true);
-        top.addView(index, new LinearLayout.LayoutParams(dp(38), -2));
+        top.addView(index, new LinearLayout.LayoutParams(dp(36), -2));
 
-        TextView label = text(name, 19, Color.WHITE, true);
+        TextView label = text(name, 17, Color.WHITE, true);
         top.addView(label, new LinearLayout.LayoutParams(0, -2, 1f));
 
-        TextView arrow = text("›", 30, ACCENT, false);
+        TextView arrow = text("›", 27, ACCENT, false);
         arrow.setGravity(Gravity.CENTER);
-        top.addView(arrow, new LinearLayout.LayoutParams(dp(28), dp(30)));
+        top.addView(arrow, new LinearLayout.LayoutParams(dp(28), dp(32)));
         card.addView(top);
 
         TextView detail = text(description, 13, MUTED, false);
-        LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
-        detailParams.topMargin = dp(8);
+        LinearLayout.LayoutParams detailParams =
+                new LinearLayout.LayoutParams(-1, -2);
+        detailParams.topMargin = dp(7);
         card.addView(detail, detailParams);
 
         card.setContentDescription(name + ". " + description);
@@ -123,9 +140,10 @@ public class MainActivity extends Activity {
 
         LinearLayout holder = new LinearLayout(this);
         holder.addView(card, new LinearLayout.LayoutParams(-1, -2));
-        LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-1, -2);
-        hp.bottomMargin = dp(13);
-        holder.setLayoutParams(hp);
+        LinearLayout.LayoutParams holderParams =
+                new LinearLayout.LayoutParams(-1, -2);
+        holderParams.bottomMargin = dp(12);
+        holder.setLayoutParams(holderParams);
         return holder;
     }
 
