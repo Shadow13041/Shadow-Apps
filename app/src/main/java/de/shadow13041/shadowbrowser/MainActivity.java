@@ -308,6 +308,22 @@ public class MainActivity extends Activity {
 
         target.setWebViewClient(new WebViewClient() {
             @Override
+            public android.webkit.WebResourceResponse shouldInterceptRequest(
+                    WebView view, WebResourceRequest request) {
+                String requestedUrl = request.getUrl().toString();
+                if (requestedUrl.equals("https://shadow.local/")
+                        || requestedUrl.equals("https://shadow.local")) {
+                    try {
+                        return new android.webkit.WebResourceResponse(
+                                "text/html", "UTF-8",
+                                getAssets().open("shadow_home.html"));
+                    } catch (Exception ignored) {
+                        return null;
+                    }
+                }
+                return super.shouldInterceptRequest(view, request);
+            }
+            @Override
             public boolean shouldOverrideUrlLoading(
                     WebView view, WebResourceRequest request) {
                 return false;

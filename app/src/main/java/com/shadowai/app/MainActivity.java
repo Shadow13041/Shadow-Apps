@@ -251,6 +251,7 @@ public class MainActivity extends Activity {
         screen.addView(drawerScrim,new FrameLayout.LayoutParams(-1,-1));
 
         buildDrawer();
+        com.shadow.apps.ui.SystemBars.apply(screen);
         setContentView(screen);
     }
 
