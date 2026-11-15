@@ -13,10 +13,10 @@ import android.widget.TextView;
 
 
 public class MainActivity extends Activity {
-    private static final int BG = Color.rgb(12, 15, 24);
-    private static final int SURFACE = Color.rgb(24, 29, 43);
-    private static final int MUTED = Color.rgb(160, 171, 194);
-    private static final int ACCENT = Color.rgb(116, 140, 255);
+    private static final int BG = Color.rgb(0, 0, 0);
+    private static final int SURFACE = Color.rgb(32, 38, 50);
+    private static final int MUTED = Color.rgb(168, 178, 194);
+    private static final int ACCENT = Color.rgb(69, 196, 255);
 
     @Override
     protected void onCreate(Bundle state) {
