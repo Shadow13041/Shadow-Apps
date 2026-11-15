@@ -12,17 +12,28 @@
     </style>
 
     <style name="ShadowDialogTheme" parent="android:style/Theme.Material.Dialog.Alert">
+        <item name="android:fontFamily">sans</item>
         <item name="android:colorAccent">#45C4FF</item>
-        <item name="android:windowBackground">#202632</item>
+        <item name="android:windowBackground">@drawable/shadow_dialog_background</item>
         <item name="android:textColorPrimary">#F0F3F8</item>
         <item name="android:textColorSecondary">#A8B2C2</item>
+        <item name="android:editTextStyle">@style/ShadowDialogEditText</item>
         <item name="android:buttonBarPositiveButtonStyle">@style/ShadowDialogButton</item>
         <item name="android:buttonBarNegativeButtonStyle">@style/ShadowDialogButton</item>
+        <item name="android:buttonBarNeutralButtonStyle">@style/ShadowDialogButton</item>
+    </style>
+
+    <style name="ShadowDialogEditText" parent="android:style/Widget.Material.EditText">
+        <item name="android:textColor">#F0F3F8</item>
+        <item name="android:textColorHint">#A8B2C2</item>
+        <item name="android:colorAccent">#45C4FF</item>
+        <item name="android:backgroundTint">#45C4FF</item>
     </style>
 
     <style name="ShadowDialogButton" parent="android:style/Widget.Material.Button.Borderless">
         <item name="android:textColor">#45C4FF</item>
         <item name="android:textAllCaps">false</item>
+        <item name="android:minHeight">48dp</item>
     </style>
 
     <style name="Theme.ShadowBrowser" parent="android:style/Theme.Material.NoActionBar">
@@ -32,6 +43,7 @@
         <item name="android:navigationBarColor">#000000</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:alertDialogTheme">@style/ShadowDialogTheme</item>
     </style>
 
 </resources>
