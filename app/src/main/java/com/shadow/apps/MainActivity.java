@@ -65,6 +65,7 @@ public class MainActivity extends Activity {
         fp.topMargin = dp(18);
         page.addView(footer, fp);
 
+        com.shadow.apps.ui.SystemBars.apply(page);
         setContentView(page);
     }
 

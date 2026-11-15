@@ -84,12 +84,12 @@ public class MainActivity extends Activity {
     private final List<Rule> rules = new ArrayList<>();
     private final List<String> studioFiles = new ArrayList<>();
 
-    private final int BG = 0xFF0D0D11;
-    private final int SURFACE = 0xFF15151C;
-    private final int SURFACE2 = 0xFF1C1C25;
-    private final int TEXT = 0xFFF4F4F7;
-    private final int MUTED = 0xFFA7A7B3;
-    private final int ACCENT = 0xFF9A7BFF;
+    private final int BG = 0xFF000000;
+    private final int SURFACE = 0xFF202632;
+    private final int SURFACE2 = 0xFF1A202B;
+    private final int TEXT = 0xFFF0F3F8;
+    private final int MUTED = 0xFFA8B2C2;
+    private final int ACCENT = 0xFF45C4FF;
     private final int SUCCESS = 0xFF70D6A3;
     private final int WARNING = 0xFFF1C76A;
 
@@ -166,6 +166,7 @@ public class MainActivity extends Activity {
         fc.addView(drawer, drawerParams);
 
         root.addView(fc, new LinearLayout.LayoutParams(-1, 0, 1));
+        com.shadow.apps.ui.SystemBars.apply(root);
         setContentView(root);
     }
 

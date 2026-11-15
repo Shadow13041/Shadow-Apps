@@ -33,7 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 public class MainActivity extends Activity {
-    private static final int COLOR_BACKGROUND = Color.rgb(16, 19, 26);
+    private static final int COLOR_BACKGROUND = Color.rgb(0, 0, 0);
     private static final int COLOR_SURFACE = Color.rgb(32, 38, 50);
     private static final int COLOR_ACCENT = Color.rgb(69, 196, 255);
 
@@ -128,6 +128,7 @@ public class MainActivity extends Activity {
         addNavigationButton(navigation, newTabButton);
 
         root.addView(navigation);
+        com.shadow.apps.ui.SystemBars.apply(root);
         setContentView(root);
 
         goButton.setOnClickListener(v -> navigateFromAddressBar());

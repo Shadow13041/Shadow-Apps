@@ -22,7 +22,7 @@ public final class BrowserSettings {
 
     public static String getHomepage(Context context) {
         return prefs(context).getString(
-                "homepage", "https://www.google.com/");
+                "homepage", "file:///android_asset/shadow_home.html");
     }
 
     public static void setHomepage(Context context, String homepage) {
