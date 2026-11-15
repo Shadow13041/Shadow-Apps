@@ -66,7 +66,7 @@ public final class FindInPageDialog {
 
             @Override
             public void onTextChanged(CharSequence s, int start,
-                                      int before, int countChars) {
+                                      int before, int count) {
                 webView.clearMatches();
                 if (s.length() > 0) {
                     webView.findAllAsync(s.toString());

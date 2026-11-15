@@ -1044,4 +1044,37 @@ public class MainActivity extends Activity {
         b.setMinWidth(dp(48));
         return b;
     }
+    private TextView iconButton(String s, int size) { TextView t = text(s, size, TEXT, true); t.setGravity(Gravity.CENTER); return t; }
+    private TextView text(String s, float size, int color, boolean bold) { TextView t = new TextView(this); t.setText(s); t.setTextSize(size); t.setTextColor(color); t.setGravity(Gravity.START); if (bold) t.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD); return t; }
+    private View space(int h) { View v = new View(this); v.setLayoutParams(new LinearLayout.LayoutParams(1, dp(h))); return v; }
+
+    private android.graphics.drawable.GradientDrawable roundBg(int color, float radius) { android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable(); g.setColor(color); g.setCornerRadius(dp((int) radius)); return g; }
+    private LinearLayout.LayoutParams lp(int w, int h) { return new LinearLayout.LayoutParams(w, h); }
+    private LinearLayout.LayoutParams bottomLp() { LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2); p.topMargin = dp(12); return p; }
+    private LinearLayout.LayoutParams topMarginLp(int margin) { LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, -2); p.topMargin = margin; return p; }
+    private int dp(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
+    private Row row(String k, String v) { return new Row(k, v); }
+
+    private void toast(String s) { Toast.makeText(this, s, Toast.LENGTH_SHORT).show(); }
+    private void animateIn(View v) { v.setAlpha(0f); v.setTranslationY(dp(8)); v.animate().alpha(1f).translationY(0).setDuration(180).start(); }
+    private String version(PackageInfo pi) { return pi.versionName == null ? String.valueOf(pi.versionCode) : pi.versionName; }
+    private String getVersionName() { try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; } catch (Exception e) { return "1.0.0-dev"; } }
+    private long totalSpace(File f) { try { return new StatFs(f.getAbsolutePath()).getTotalBytes(); } catch (Exception e) { return f.getTotalSpace(); } }
+    private long freeSpace(File f) { try { return new StatFs(f.getAbsolutePath()).getAvailableBytes(); } catch (Exception e) { return f.getFreeSpace(); } }
+    private long freeStorage() { return freeSpace(Environment.getDataDirectory()); }
+    private long folderSize(File f) { if (f == null || !f.exists()) return 0; if (f.isFile()) return f.length(); long n = 0; File[] list = f.listFiles(); if (list != null) for (File c : list) n += folderSize(c); return n; }
+    private String formatBytes(long bytes) { if (bytes < 1024) return bytes + " B"; double v = bytes; String[] units = {"B","KB","MB","GB","TB"}; int i=0; while (v >= 1024 && i < units.length-1) { v/=1024; i++; } return new DecimalFormat("0.0").format(v) + " " + units[i]; }
+
+    @Override protected void onDestroy() { handler.removeCallbacksAndMessages(null); executor.shutdownNow(); super.onDestroy(); }
+
+    static final class Row { final String key, value; Row(String k, String v) { key=k; value=v; } }
+    static final class Rule { final String name, when, then; Rule(String n,String w,String t){name=n;when=w;then=t;} }
+
+    private void saveRules() { JSONArray a = new JSONArray(); for (Rule r : rules) { JSONObject o = new JSONObject(); try { o.put("name",r.name); o.put("when",r.when); o.put("then",r.then); a.put(o);} catch(Exception ignored){} } prefs.edit().putString("rules", a.toString()).apply(); }
+    private void refreshRuleText(TextView t) { StringBuilder s=new StringBuilder(); for(Rule r:rules)s.append("• ").append(r.name).append(" — ").append(r.when).append(" → ").append(r.then).append("\n"); t.setText(s.length()==0?"Noch keine Regeln.":s.toString()); }
+
+    /** Tiny in-app FrameLayout wrapper to avoid external UI dependencies. */
+    static class FrameContainer extends android.widget.FrameLayout {
+        FrameContainer(Context c) { super(c); }
+    }
 }
