@@ -16,7 +16,7 @@
 
     <application
         android:allowBackup="false"
-        android:icon="@drawable/shadow_logo"
+        android:icon="@mipmap/ic_launcher"
         android:label="Shadow Apps"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
