@@ -50,7 +50,7 @@
 
         <provider
             android:name="de.shadow13041.shadowbrowser.BrowserContextProvider"
-            android:authorities="com.shadow.apps.browser.context"
+            android:authorities="com.shadow.toolbox.debug.browser.context"
             android:exported="false" />
 
         <service

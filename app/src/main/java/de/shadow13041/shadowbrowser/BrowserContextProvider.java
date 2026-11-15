@@ -12,9 +12,9 @@ import org.json.JSONObject;
 
 public class BrowserContextProvider extends ContentProvider {
     public static final String AUTHORITY =
-            "com.shadow.apps.browser.context";
+            "com.shadow.toolbox.debug.browser.context";
 
-    private static final String SHADOW_AI_PACKAGE = "com.shadow.apps";
+    private static final String SHADOW_AI_PACKAGE = "com.shadow.toolbox.debug";
     private static final String[] COLUMNS = {"title", "url", "active"};
 
     @Override
