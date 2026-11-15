@@ -67,10 +67,6 @@ public class MainActivity extends Activity {
         addressRow.setOrientation(LinearLayout.HORIZONTAL);
 
         addressBar = new EditText(this);
-        addressBar.setOnLongClickListener(v -> {
-            showBrowserDataMenu();
-            return true;
-        });
         addressBar.setSingleLine(true);
         addressBar.setTextColor(Color.WHITE);
         addressBar.setHintTextColor(Color.rgb(168, 178, 194));
@@ -87,7 +83,7 @@ public class MainActivity extends Activity {
         addressBar.setBackground(addressBackground);
         addressRow.addView(addressBar, new LinearLayout.LayoutParams(0, dp(46), 1));
 
-        Button goButton = createButton("Go", true);
+        Button goButton = createButton("➜", true);
         LinearLayout.LayoutParams goParams = new LinearLayout.LayoutParams(dp(54), dp(46));
         goParams.leftMargin = dp(7);
         addressRow.addView(goButton, goParams);
@@ -115,9 +111,9 @@ public class MainActivity extends Activity {
 
         backButton = createButton("‹", false);
         forwardButton = createButton("›", false);
-        Button homeButton = createButton("Home", false);
-        Button reloadButton = createButton("↻", false);
-        tabsButton = createButton("Tabs (0)", false);
+        Button homeButton = createButton("⌂", false);
+        Button reloadButton = createButton("⟳", false);
+        tabsButton = createButton("▢ 0", false);
         Button newTabButton = createButton("+", true);
 
         addNavigationButton(navigation, backButton);
@@ -180,7 +176,7 @@ public class MainActivity extends Activity {
         webView = newWebView;
         configureWebView(newWebView);
         newWebView.setVisibility(View.VISIBLE);
-        addressBar.setText(url);
+        addressBar.setText(displayAddress(url));
         updateTabButton();
         updateNavigationButtons();
         newWebView.loadUrl(url);
@@ -195,7 +191,7 @@ public class MainActivity extends Activity {
         webView.setVisibility(View.VISIBLE);
 
         String url = webView.getUrl();
-        addressBar.setText(url == null ? "" : url);
+        addressBar.setText(displayAddress(url));
 
         updateTabButton();
         updateNavigationButtons();
@@ -224,42 +220,9 @@ public class MainActivity extends Activity {
         updateTabButton();
     }
 
-    private void showTabOverview() {
-        if (tabs.isEmpty()) {
-            createTab(BrowserSettings.getHomepage(this));
-            return;
-        }
-
-        String[] labels = new String[tabs.size()];
-        int selected = tabs.indexOf(webView);
-
-        for (int i = 0; i < tabs.size(); i++) {
-            WebView tab = tabs.get(i);
-            String title = tab.getTitle();
-            String url = tab.getUrl();
-
-            if (title == null || title.trim().isEmpty()) {
-                title = url == null ? "New tab" : url;
-            }
-
-            labels[i] = (i == selected ? "● " : "")
-                    + title + "\n"
-                    + (url == null ? "" : url);
-        }
-
-        new AlertDialog.Builder(this)
-                .setTitle("Open tabs (" + tabs.size() + ")")
-                .setItems(labels, (dialog, which) -> switchTab(which))
-                .setPositiveButton("New tab", (dialog, which) -> createTab(BrowserSettings.getHomepage(this)))
-                .setNegativeButton("Close current tab",
-                        (dialog, which) -> closeCurrentTab())
-                .setNeutralButton("Done", null)
-                .show();
-    }
-
-    private void updateTabButton() {
+    $replacement    private void updateTabButton() {
         if (tabsButton != null) {
-            tabsButton.setText("Tabs (" + tabs.size() + ")");
+            tabsButton.setText("▢ " + tabs.size());
         }
     }
 
@@ -333,7 +296,7 @@ public class MainActivity extends Activity {
             public void onPageFinished(WebView view, String url) {
                 if (url != null) BrowserDataStore.addHistory(MainActivity.this, url, view.getTitle());
                 if (view == webView) {
-                    addressBar.setText(url);
+                    addressBar.setText(displayAddress(url));
                     updateNavigationButtons();
                 }
             }
