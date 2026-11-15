@@ -346,7 +346,9 @@ public class MainActivity extends Activity {
                 String label = pi == null ? f.getName() : String.valueOf(pi.applicationInfo.loadLabel(getPackageManager()));
                 TextView t = text(label + "\n" + f.getName() + (pi == null ? "" : "\n" + pi.packageName + " · " + version(pi)), 14, TEXT, false);
                 t.setPadding(dp(8), dp(10), dp(8), dp(10));
-                t.setBackground(roundBg(SURFACE2, 12));
+                android.graphics.drawable.GradientDrawable apkBg = roundBg(SURFACE, 14);
+                apkBg.setStroke(dp(1), 0xFF303B4B);
+                t.setBackground(apkBg);
                 box.addView(t, topMarginLp(dp(6)));
             }
         }
@@ -357,14 +359,14 @@ public class MainActivity extends Activity {
         AlertDialog.Builder b = new AlertDialog.Builder(this);
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(dp(18), dp(10), dp(18), dp(6));
+        layout.setPadding(dp(18), dp(14), dp(18), dp(10));
         layout.addView(text("Shadow Vault schützt lokale Dateien mit AES-GCM und einem Schlüssel aus Android Keystore.", 13, MUTED, false));
         Button auth = smallButton("Gerätesperre bestätigen");
         auth.setOnClickListener(v -> authenticateVault());
-        layout.addView(auth);
+        layout.addView(auth, topMarginLp(dp(10)));
         Button add = smallButton("Datei verschlüsselt hinzufügen");
         add.setOnClickListener(v -> { chooseVaultFile(); });
-        layout.addView(add);
+        layout.addView(add, topMarginLp(dp(8)));
         File dir = new File(getFilesDir(), "vault");
         File[] entries = dir.listFiles();
         StringBuilder list = new StringBuilder("\nGespeicherte Vault-Einträge:\n");
@@ -521,9 +523,13 @@ public class MainActivity extends Activity {
             String title = String.valueOf(app.loadLabel(pm));
             TextView row = text(title + "\n" + app.packageName, 14, TEXT, false);
             row.setPadding(dp(10), dp(10), dp(10), dp(10));
-            row.setBackground(roundBg(SURFACE2, 14));
+            android.graphics.drawable.GradientDrawable appBg = roundBg(SURFACE, 14);
+            appBg.setStroke(dp(1), 0xFF303B4B);
+            row.setBackground(appBg);
+            row.setClickable(true);
+            row.setFocusable(true);
             row.setOnClickListener(v -> appActions(app.packageName, title));
-            content.addView(row, topMarginLp(dp(6)));
+            content.addView(row, topMarginLp(dp(8)));
             count++;
         }
     }
@@ -591,11 +597,13 @@ public class MainActivity extends Activity {
     private void showHiddenAppMenu() {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(18), dp(12), dp(18), dp(8));
         Button browser = button("Shadow Browser");
         browser.setOnClickListener(v -> { buildBrowser(); });
         Button apk = button("APK Launcher");
         apk.setOnClickListener(v -> chooseApk());
-        box.addView(browser); box.addView(apk);
+        box.addView(browser);
+        box.addView(apk, topMarginLp(dp(8)));
         new AlertDialog.Builder(this).setTitle("Shadow App Menu").setView(box).setNegativeButton("Schließen", null).show();
     }
 
@@ -917,7 +925,9 @@ public class MainActivity extends Activity {
         });
         Button info = smallButton("App-Info / Berechtigungen");
         info.setOnClickListener(v -> { try { startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + packageName))); } catch (Exception ignored) {} });
-        box.addView(open); box.addView(info);
+        box.setPadding(dp(18), dp(12), dp(18), dp(8));
+        box.addView(open);
+        box.addView(info, topMarginLp(dp(8)));
         new AlertDialog.Builder(this).setTitle(label).setView(box).setNegativeButton("Schließen", null).show();
     }
 
