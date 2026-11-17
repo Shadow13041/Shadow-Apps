@@ -526,22 +526,56 @@ public class MainActivity extends Activity {
         button.setMinWidth(0);
         button.setMinimumWidth(0);
         button.setPadding(dp(5), 0, dp(5), 0);
-        button.setContentDescription(text);
 
         int icon = 0;
-        if ("➜".equals(text)) icon = android.R.drawable.ic_menu_send;
-        else if ("⋮".equals(text)) icon = android.R.drawable.ic_menu_more;
-        else if ("‹".equals(text)) icon = android.R.drawable.ic_media_previous;
-        else if ("›".equals(text)) icon = android.R.drawable.ic_media_next;
-        else if ("⌂".equals(text)) icon = android.R.drawable.ic_menu_myplaces;
-        else if ("↻".equals(text)) icon = android.R.drawable.ic_popup_sync;
-        else if ("▢".equals(text)) icon = android.R.drawable.ic_menu_view;
-        else if ("+".equals(text)) icon = android.R.drawable.ic_input_add;
-        else if ("×".equals(text)) icon = android.R.drawable.ic_menu_close_clear_cancel;
+        String description = text;
 
+        switch (text) {
+            case "➜":
+                icon = R.drawable.ic_browser_go;
+                description = "Suchen oder öffnen";
+                break;
+            case "⋮":
+                icon = R.drawable.ic_browser_menu;
+                description = "Browser-Menü";
+                break;
+            case "‹":
+                icon = R.drawable.ic_browser_back;
+                description = "Zurück";
+                break;
+            case "›":
+                icon = R.drawable.ic_browser_forward;
+                description = "Vorwärts";
+                break;
+            case "⌂":
+                icon = R.drawable.ic_browser_home;
+                description = "Startseite";
+                break;
+            case "↻":
+                icon = R.drawable.ic_browser_reload;
+                description = "Neu laden";
+                break;
+            case "▢":
+                icon = R.drawable.ic_browser_tabs;
+                description = "Tabs";
+                break;
+            case "+":
+                icon = R.drawable.ic_browser_add;
+                description = "Neuer Tab";
+                break;
+            case "×":
+                icon = R.drawable.ic_browser_close;
+                description = "Schließen";
+                break;
+        }
+
+        button.setContentDescription(description);
         if (icon != 0) {
+            android.graphics.drawable.Drawable drawable =
+                    getDrawable(icon).mutate();
+            drawable.setTint(accent ? Color.rgb(0, 19, 29) : Color.WHITE);
             button.setText("");
-            button.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
+            button.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
             button.setGravity(Gravity.CENTER);
         } else {
             button.setText(text);
