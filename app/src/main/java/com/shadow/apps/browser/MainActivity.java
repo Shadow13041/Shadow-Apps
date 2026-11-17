@@ -428,6 +428,7 @@ public class MainActivity extends Activity {
                 return handleInternalUrl(view, request.getUrl().toString());
             }
 
+
             
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 return handleInternalUrl(view, url);
