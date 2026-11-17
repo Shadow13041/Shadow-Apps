@@ -407,6 +407,19 @@ public class MainActivity extends Activity {
 
         target.setBackgroundColor(COLOR_BACKGROUND);
 
+        target.setOnLongClickListener(v -> {
+            WebView.HitTestResult result = target.getHitTestResult();
+            if (result == null) return false;
+            int type = result.getType();
+            if (type != WebView.HitTestResult.SRC_ANCHOR_TYPE
+                    && type != WebView.HitTestResult.IMAGE_ANCHOR_TYPE) return false;
+            String url = result.getExtra();
+            if (url == null || !(url.startsWith("https://")
+                    || url.startsWith("http://"))) return false;
+            showLinkContextMenu(url);
+            return true;
+        });
+
         target.setWebViewClient(new WebViewClient() {
             @Override
             public android.webkit.WebResourceResponse shouldInterceptRequest(
@@ -432,7 +445,8 @@ public class MainActivity extends Activity {
 
 
             
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            @Override
+    public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 return handleInternalUrl(view, url);
             }
 
@@ -598,7 +612,23 @@ public class MainActivity extends Activity {
                 })
                 .show();
     }
-    private boolean handleInternalUrl(WebView view, String url) {
+    private void showLinkContextMenu(String url) {
+    new AlertDialog.Builder(this)
+            .setTitle("Link")
+            .setItems(new String[]{"In neuem Tab öffnen", "Link kopieren"}, (dialog, which) -> {
+                if (which == 0) {
+                    createTab(url);
+                } else {
+                    ClipboardManager clipboard =
+                            (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                    clipboard.setPrimaryClip(ClipData.newPlainText("Link", url));
+                    Toast.makeText(this, "Link kopiert", Toast.LENGTH_SHORT).show();
+                }
+            })
+            .show();
+}
+
+private boolean handleInternalUrl(WebView view, String url) {
         if (url == null || !url.startsWith("shadow-search://search/")) return false;
         try {
             String query = Uri.parse(url).getLastPathSegment();
