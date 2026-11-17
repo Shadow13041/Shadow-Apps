@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
 import android.graphics.Color;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.net.Uri;
 import android.os.Environment;
 import android.graphics.drawable.GradientDrawable;
@@ -25,7 +27,10 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.net.URLEncoder;
@@ -33,7 +38,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 public class MainActivity extends Activity {
-    private static final int COLOR_BACKGROUND = Color.rgb(16, 19, 26);
+    private static final int COLOR_BACKGROUND = Color.rgb(0, 0, 0);
     private static final int COLOR_SURFACE = Color.rgb(32, 38, 50);
     private static final int COLOR_ACCENT = Color.rgb(69, 196, 255);
 
@@ -67,11 +72,9 @@ public class MainActivity extends Activity {
         addressRow.setOrientation(LinearLayout.HORIZONTAL);
 
         addressBar = new EditText(this);
-        addressBar.setOnLongClickListener(v -> {
-            showBrowserDataMenu();
-            return true;
-        });
         addressBar.setSingleLine(true);
+        addressBar.setLongClickable(false);
+        addressBar.setTextIsSelectable(false);
         addressBar.setTextColor(Color.WHITE);
         addressBar.setHintTextColor(Color.rgb(168, 178, 194));
         addressBar.setHint("Search or enter address");
@@ -84,13 +87,18 @@ public class MainActivity extends Activity {
         GradientDrawable addressBackground = new GradientDrawable();
         addressBackground.setColor(COLOR_SURFACE);
         addressBackground.setCornerRadius(dp(24));
+        addressBackground.setStroke(dp(1), Color.rgb(48, 59, 75));
         addressBar.setBackground(addressBackground);
         addressRow.addView(addressBar, new LinearLayout.LayoutParams(0, dp(46), 1));
 
-        Button goButton = createButton("Go", true);
+        Button goButton = createButton("➜", true);
         LinearLayout.LayoutParams goParams = new LinearLayout.LayoutParams(dp(54), dp(46));
         goParams.leftMargin = dp(7);
         addressRow.addView(goButton, goParams);
+        Button menuButton = createButton("⋮", false);
+        LinearLayout.LayoutParams menuParams = new LinearLayout.LayoutParams(dp(42), dp(46));
+        menuParams.leftMargin = dp(5);
+        addressRow.addView(menuButton, menuParams);
         root.addView(addressRow);
 
         progressBar = new ProgressBar(this, null,
@@ -115,9 +123,9 @@ public class MainActivity extends Activity {
 
         backButton = createButton("‹", false);
         forwardButton = createButton("›", false);
-        Button homeButton = createButton("Home", false);
+        Button homeButton = createButton("⌂", false);
         Button reloadButton = createButton("↻", false);
-        tabsButton = createButton("Tabs (0)", false);
+        tabsButton = createButton("▢", false);
         Button newTabButton = createButton("+", true);
 
         addNavigationButton(navigation, backButton);
@@ -128,9 +136,11 @@ public class MainActivity extends Activity {
         addNavigationButton(navigation, newTabButton);
 
         root.addView(navigation);
+        com.shadow.apps.ui.SystemBars.apply(root);
         setContentView(root);
 
         goButton.setOnClickListener(v -> navigateFromAddressBar());
+        menuButton.setOnClickListener(v -> showBrowserDataMenu());
 
         addressBar.setOnEditorActionListener((view, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_GO
@@ -179,7 +189,7 @@ public class MainActivity extends Activity {
         webView = newWebView;
         configureWebView(newWebView);
         newWebView.setVisibility(View.VISIBLE);
-        addressBar.setText(url);
+        addressBar.setText(displayAddress(url));
         updateTabButton();
         updateNavigationButtons();
         newWebView.loadUrl(url);
@@ -194,7 +204,7 @@ public class MainActivity extends Activity {
         webView.setVisibility(View.VISIBLE);
 
         String url = webView.getUrl();
-        addressBar.setText(url == null ? "" : url);
+        addressBar.setText(displayAddress(url));
 
         updateTabButton();
         updateNavigationButtons();
@@ -223,42 +233,139 @@ public class MainActivity extends Activity {
         updateTabButton();
     }
 
-    private void showTabOverview() {
-        if (tabs.isEmpty()) {
-            createTab(BrowserSettings.getHomepage(this));
-            return;
-        }
+    private String displayAddress(String url) {
+        if (url == null || url.isEmpty()) return "";
+        if (url.startsWith("https://shadow.local")) return "Startseite";
+        return url;
+    }
 
-        String[] labels = new String[tabs.size()];
-        int selected = tabs.indexOf(webView);
+    private void showTabOverview() {
+        if (tabs.isEmpty()) return;
+
+        LinearLayout list = new LinearLayout(this);
+        list.setOrientation(LinearLayout.VERTICAL);
+        list.setPadding(dp(16), dp(8), dp(16), dp(8));
+
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(list);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Registerkarten · " + tabs.size())
+                .setView(scroll)
+                .setNegativeButton("Schließen", null)
+                .setPositiveButton("Neuer Tab", (d, w) -> createTab(BrowserSettings.getHomepage(this)))
+                .create();
 
         for (int i = 0; i < tabs.size(); i++) {
+            final int tabIndex = i;
             WebView tab = tabs.get(i);
-            String title = tab.getTitle();
-            String url = tab.getUrl();
+            LinearLayout card = new LinearLayout(this);
+            card.setOrientation(LinearLayout.VERTICAL);
+            card.setPadding(dp(14), dp(12), dp(12), dp(12));
+            GradientDrawable cardBg = new GradientDrawable();
+            cardBg.setColor(COLOR_SURFACE);
+            cardBg.setCornerRadius(dp(16));
+            cardBg.setStroke(dp(1), Color.rgb(48, 59, 75));
+            card.setBackground(cardBg);
 
-            if (title == null || title.trim().isEmpty()) {
-                title = url == null ? "New tab" : url;
-            }
+            ImageView preview = new ImageView(this);
+            preview.setBackgroundColor(Color.rgb(13, 17, 24));
+            preview.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            preview.setImageBitmap(createTabPreview(tab));
+            LinearLayout.LayoutParams previewLp = new LinearLayout.LayoutParams(-1, dp(154));
+            previewLp.bottomMargin = dp(11);
+            card.addView(preview, previewLp);
 
-            labels[i] = (i == selected ? "● " : "")
-                    + title + "\n"
-                    + (url == null ? "" : url);
+            String pageTitle = tab.getTitle();
+            if (pageTitle == null || pageTitle.trim().isEmpty()) pageTitle = "Neuer Tab";
+            TextView title = new TextView(this);
+            title.setText(pageTitle);
+            title.setTextColor(Color.WHITE);
+            title.setTextSize(15);
+            title.setTypeface(null, android.graphics.Typeface.BOLD);
+            card.addView(title);
+
+            TextView address = new TextView(this);
+            address.setText(displayAddress(tab.getUrl()));
+            address.setTextColor(Color.rgb(168, 178, 194));
+            address.setTextSize(12);
+            address.setMaxLines(2);
+            LinearLayout.LayoutParams addressLp = new LinearLayout.LayoutParams(-1, -2);
+            addressLp.topMargin = dp(5);
+            card.addView(address, addressLp);
+
+            LinearLayout actions = new LinearLayout(this);
+            actions.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+            Button close = createButton("×", false);
+            Button open = createButton("Öffnen", true);
+            LinearLayout.LayoutParams closeLp = new LinearLayout.LayoutParams(dp(46), dp(40));
+            closeLp.rightMargin = dp(8);
+            actions.addView(close, closeLp);
+            actions.addView(open, new LinearLayout.LayoutParams(dp(94), dp(40)));
+            LinearLayout.LayoutParams actionsLp = new LinearLayout.LayoutParams(-1, -2);
+            actionsLp.topMargin = dp(10);
+            card.addView(actions, actionsLp);
+
+            card.setOnClickListener(v -> {
+                dialog.dismiss();
+                switchTab(tabIndex);
+            });
+            open.setOnClickListener(v -> {
+                dialog.dismiss();
+                switchTab(tabIndex);
+            });
+            close.setOnClickListener(v -> {
+                dialog.dismiss();
+                closeTabAt(tabIndex);
+                if (!tabs.isEmpty()) showTabOverview();
+            });
+
+            LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(-1, -2);
+            cardLp.bottomMargin = dp(10);
+            list.addView(card, cardLp);
         }
 
-        new AlertDialog.Builder(this)
-                .setTitle("Open tabs (" + tabs.size() + ")")
-                .setItems(labels, (dialog, which) -> switchTab(which))
-                .setPositiveButton("New tab", (dialog, which) -> createTab(BrowserSettings.getHomepage(this)))
-                .setNegativeButton("Close current tab",
-                        (dialog, which) -> closeCurrentTab())
-                .setNeutralButton("Done", null)
-                .show();
+        dialog.show();
+    }
+
+    private Bitmap createTabPreview(WebView source) {
+        int width = 480;
+        int height = 270;
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+        Canvas canvas = new Canvas(bitmap);
+        canvas.drawColor(Color.rgb(13, 17, 24));
+        float scale = Math.min((float) width / Math.max(1, source.getWidth()),
+                (float) height / Math.max(1, source.getHeight()));
+        canvas.save();
+        canvas.scale(scale, scale);
+        source.draw(canvas);
+        canvas.restore();
+        return bitmap;
+    }
+
+    private void closeTabAt(int index) {
+        if (index < 0 || index >= tabs.size()) return;
+        WebView closing = tabs.get(index);
+        boolean wasCurrent = closing == webView;
+        tabs.remove(index);
+        webContainer.removeView(closing);
+        closing.stopLoading();
+        closing.setWebChromeClient(null);
+        closing.setWebViewClient(null);
+        closing.destroy();
+
+        if (tabs.isEmpty()) {
+            webView = null;
+            createTab(BrowserSettings.getHomepage(this));
+        } else if (wasCurrent) {
+            webView = null;
+            switchTab(Math.min(index, tabs.size() - 1));
+        }
+        updateTabButton();
     }
 
     private void updateTabButton() {
         if (tabsButton != null) {
-            tabsButton.setText("Tabs (" + tabs.size() + ")");
+            tabsButton.setText(String.valueOf(tabs.size()));
         }
     }
 
@@ -303,9 +410,25 @@ public class MainActivity extends Activity {
         }
 
 
-        target.setBackgroundColor(Color.WHITE);
+        target.setBackgroundColor(COLOR_BACKGROUND);
 
         target.setWebViewClient(new WebViewClient() {
+            @Override
+            public android.webkit.WebResourceResponse shouldInterceptRequest(
+                    WebView view, WebResourceRequest request) {
+                String requestedUrl = request.getUrl().toString();
+                if (requestedUrl.equals("https://shadow.local/")
+                        || requestedUrl.equals("https://shadow.local")) {
+                    try {
+                        return new android.webkit.WebResourceResponse(
+                                "text/html", "UTF-8",
+                                getAssets().open("shadow_home.html"));
+                    } catch (Exception ignored) {
+                        return null;
+                    }
+                }
+                return super.shouldInterceptRequest(view, request);
+            }
             @Override
             public boolean shouldOverrideUrlLoading(
                     WebView view, WebResourceRequest request) {
@@ -316,7 +439,7 @@ public class MainActivity extends Activity {
             public void onPageFinished(WebView view, String url) {
                 if (url != null) BrowserDataStore.addHistory(MainActivity.this, url, view.getTitle());
                 if (view == webView) {
-                    addressBar.setText(url);
+                    addressBar.setText(displayAddress(url));
                     updateNavigationButtons();
                 }
             }
@@ -394,19 +517,40 @@ public class MainActivity extends Activity {
         webView.loadUrl(target);
     }
 
+
     private Button createButton(String text, boolean accent) {
         Button button = new Button(this);
-        button.setText(text);
-        button.setTextSize(12);
-        button.setTextColor(Color.WHITE);
+        button.setTextSize(accent ? 14 : 20);
+        button.setTextColor(accent ? Color.rgb(0, 19, 29) : Color.WHITE);
         button.setAllCaps(false);
         button.setMinWidth(0);
         button.setMinimumWidth(0);
         button.setPadding(dp(5), 0, dp(5), 0);
+        button.setContentDescription(text);
+
+        int icon = 0;
+        if ("➜".equals(text)) icon = android.R.drawable.ic_menu_send;
+        else if ("⋮".equals(text)) icon = android.R.drawable.ic_menu_more;
+        else if ("‹".equals(text)) icon = android.R.drawable.ic_media_previous;
+        else if ("›".equals(text)) icon = android.R.drawable.ic_media_next;
+        else if ("⌂".equals(text)) icon = android.R.drawable.ic_menu_myplaces;
+        else if ("↻".equals(text)) icon = android.R.drawable.ic_popup_sync;
+        else if ("▢".equals(text)) icon = android.R.drawable.ic_menu_view;
+        else if ("+".equals(text)) icon = android.R.drawable.ic_input_add;
+        else if ("×".equals(text)) icon = android.R.drawable.ic_menu_close_clear_cancel;
+
+        if (icon != 0) {
+            button.setText("");
+            button.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
+            button.setGravity(Gravity.CENTER);
+        } else {
+            button.setText(text);
+        }
 
         GradientDrawable background = new GradientDrawable();
         background.setColor(accent ? COLOR_ACCENT : COLOR_SURFACE);
         background.setCornerRadius(dp(18));
+        background.setStroke(dp(1), accent ? COLOR_ACCENT : Color.rgb(48, 59, 75));
         button.setBackground(background);
         return button;
     }
