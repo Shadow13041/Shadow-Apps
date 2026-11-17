@@ -1,5 +1,7 @@
 package com.shadow.apps.browser;
 
+import com.shadow.apps.R;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
