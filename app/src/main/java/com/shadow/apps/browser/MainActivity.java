@@ -152,7 +152,8 @@ public class MainActivity extends Activity {
         reloadButton.setOnClickListener(v -> {
             if (webView != null) webView.reload();
         });
-        customButton.setOnClickListener(v -> showCustomActionDialog());
+        customButton.setOnClickListener(v -> performCustomAction());
+        customButton.setOnLongClickListener(v -> { showCustomActionDialog(); return true; });
         menuButton.setOnClickListener(v -> showBrowserDataMenu());
 
         addressBar.setOnEditorActionListener((view, actionId, event) -> {
@@ -424,7 +425,12 @@ public class MainActivity extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(
                     WebView view, WebResourceRequest request) {
-                return false;
+                return handleInternalUrl(view, request.getUrl().toString());
+            }
+
+            
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return handleInternalUrl(view, url);
             }
 
             @Override
@@ -589,6 +595,18 @@ public class MainActivity extends Activity {
                 })
                 .show();
     }
+    private boolean handleInternalUrl(WebView view, String url) {
+        if (url == null || !url.startsWith("shadow-search://search/")) return false;
+        try {
+            String query = Uri.parse(url).getLastPathSegment();
+            if (query == null || query.trim().isEmpty()) return true;
+            view.loadUrl(BrowserSettings.buildSearchUrl(this, query));
+        } catch (Exception e) {
+            Toast.makeText(this, "Suche konnte nicht gestartet werden", Toast.LENGTH_SHORT).show();
+        }
+        return true;
+    }
+
     private void navigateFromAddressBar() {
         String input = addressBar.getText().toString().trim();
         if (input.isEmpty() || webView == null) return;

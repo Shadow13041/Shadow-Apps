@@ -90,8 +90,7 @@ document.getElementById("search").addEventListener("submit",function(e){
  const q=document.getElementById("query").value.trim();
  if(!q)return;
  const isUrl=/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(:[0-9]+)?(\/.*)?$/.test(q);
- location.href=isUrl?"https://"+q:
-  "https://www.google.com/search?q="+encodeURIComponent(q);
+ location.href=isUrl?"https://"+q:"shadow-search://search/"+encodeURIComponent(q);
 });
 </script>
 </body>
