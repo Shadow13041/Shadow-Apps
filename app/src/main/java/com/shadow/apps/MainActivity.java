@@ -65,7 +65,7 @@ public class MainActivity extends Activity {
         scroll.addView(cards);
         page.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1f));
 
-        TextView footer = text("SHADOW APPS  •  VERSION 1.0", 10,
+        TextView footer = text("SHADOW APPS  •  VERSION " + BuildConfig.VERSION_NAME, 10,
                 Color.rgb(105, 116, 139), false);
         footer.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams footerParams =

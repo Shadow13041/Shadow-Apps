@@ -72,6 +72,7 @@ public class MainActivity extends Activity {
 
     private LinearLayout content;
     private LinearLayout drawer;
+    private LinearLayout drawerItems;
     private TextView toolbarTitle;
     private TextView pageSubtitle;
     private View drawerScrim;
@@ -197,7 +198,7 @@ public class MainActivity extends Activity {
         });
         LinearLayout.LayoutParams p = lp(-1, dp(44));
         p.topMargin = dp(5);
-        drawer.addView(item, p);
+        drawerItems.addView(item, p);
     }
 
     private void openDrawer() {
