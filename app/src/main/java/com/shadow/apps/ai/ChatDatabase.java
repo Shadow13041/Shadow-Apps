@@ -1,4 +1,4 @@
-package com.shadowai.app;
+package com.shadow.apps.ai;
 
 import android.content.ContentValues;
 import android.content.Context;

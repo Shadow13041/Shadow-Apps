@@ -1,4 +1,4 @@
-package com.shadowai.app;
+package com.shadow.apps.ai;
 
 public final class AnswerFormatter {
     private AnswerFormatter() {}

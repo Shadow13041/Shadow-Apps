@@ -1,4 +1,4 @@
-package com.shadowai.app;
+package com.shadow.apps.ai;
 
 import android.content.Context;
 import android.content.SharedPreferences;

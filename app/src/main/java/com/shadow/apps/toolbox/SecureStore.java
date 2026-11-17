@@ -1,4 +1,4 @@
-package com.shadow.toolbox;
+package com.shadow.apps.toolbox;
 
 import android.content.Context;
 import android.content.SharedPreferences;

@@ -8,7 +8,7 @@ android {
     compileSdk 35
 
     defaultConfig {
-        applicationId 'com.shadow.toolbox.debug'
+        applicationId 'com.shadow.apps'
         minSdk 24
         targetSdk 35
         versionCode 1

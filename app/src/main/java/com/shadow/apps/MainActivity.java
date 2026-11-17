@@ -124,13 +124,13 @@ public class MainActivity extends Activity {
             Intent intent;
             switch (feature) {
                 case "toolbox":
-                    intent = new Intent(this, com.shadow.toolbox.MainActivity.class);
+                    intent = new Intent(this, com.shadow.apps.toolbox.MainActivity.class);
                     break;
                 case "ai":
-                    intent = new Intent(this, com.shadowai.app.MainActivity.class);
+                    intent = new Intent(this, com.shadow.apps.ai.MainActivity.class);
                     break;
                 case "browser":
-                    intent = new Intent(this, de.shadow13041.shadowbrowser.MainActivity.class);
+                    intent = new Intent(this, com.shadow.apps.browser.MainActivity.class);
                     break;
                 default:
                     return;

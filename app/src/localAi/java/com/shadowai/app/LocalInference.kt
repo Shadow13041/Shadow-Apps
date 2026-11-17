@@ -1,4 +1,4 @@
-package com.shadowai.app
+package com.shadow.apps.ai
 
 import dev.ffmpegkit.llama.Llama
 import dev.ffmpegkit.llama.LlamaConfig

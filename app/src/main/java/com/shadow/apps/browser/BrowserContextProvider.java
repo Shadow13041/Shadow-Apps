@@ -1,4 +1,4 @@
-package de.shadow13041.shadowbrowser;
+package com.shadow.apps.browser;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -12,9 +12,9 @@ import org.json.JSONObject;
 
 public class BrowserContextProvider extends ContentProvider {
     public static final String AUTHORITY =
-            "de.shadow13041.shadowbrowser.context";
+            "com.shadow.apps.browser.context";
 
-    private static final String SHADOW_AI_PACKAGE = "com.shadowai.app";
+    private static final String SHADOW_AI_PACKAGE = "com.shadow.apps.ai";
     private static final String[] COLUMNS = {"title", "url", "active"};
 
     @Override

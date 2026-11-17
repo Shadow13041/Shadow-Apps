@@ -32,29 +32,29 @@
         </activity>
 
         <activity
-            android:name="com.shadowai.app.MainActivity"
+            android:name="com.shadow.apps.ai.MainActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/AppTheme" />
 
         <activity
-            android:name="com.shadow.toolbox.MainActivity"
+            android:name="com.shadow.apps.toolbox.MainActivity"
             android:exported="false"
             android:theme="@style/Theme.ShadowToolbox" />
 
         <activity
-            android:name="de.shadow13041.shadowbrowser.MainActivity"
+            android:name="com.shadow.apps.browser.MainActivity"
             android:exported="false"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:theme="@style/Theme.ShadowBrowser" />
 
         <provider
-            android:name="de.shadow13041.shadowbrowser.BrowserContextProvider"
-            android:authorities="com.shadow.toolbox.debug.browser.context"
+            android:name="com.shadow.apps.browser.BrowserContextProvider"
+            android:authorities="com.shadow.apps.toolbox.debug.browser.context"
             android:exported="false" />
 
         <service
-            android:name="com.shadow.toolbox.ShadowVpnService"
+            android:name="com.shadow.apps.toolbox.ShadowVpnService"
             android:permission="android.permission.BIND_VPN_SERVICE"
             android:exported="false">
             <intent-filter>

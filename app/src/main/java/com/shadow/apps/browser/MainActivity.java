@@ -1,4 +1,4 @@
-package de.shadow13041.shadowbrowser;
+package com.shadow.apps.browser;
 
 import android.app.Activity;
 import android.app.AlertDialog;

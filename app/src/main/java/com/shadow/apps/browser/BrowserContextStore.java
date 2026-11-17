@@ -1,4 +1,4 @@
-package de.shadow13041.shadowbrowser;
+package com.shadow.apps.browser;
 
 import android.content.Context;
 import android.content.SharedPreferences;

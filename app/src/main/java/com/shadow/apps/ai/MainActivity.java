@@ -1,4 +1,4 @@
-package com.shadowai.app;
+package com.shadow.apps.ai;
 import com.shadow.apps.BuildConfig;
 import com.shadow.apps.R;
 

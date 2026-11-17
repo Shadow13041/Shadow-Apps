@@ -1,4 +1,4 @@
-package com.shadow.toolbox;
+package com.shadow.apps.toolbox;
 
 import java.security.SecureRandom;
 import android.Manifest;
