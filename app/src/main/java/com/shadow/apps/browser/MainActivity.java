@@ -19,6 +19,7 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.content.Context;
+import android.content.Intent;
 import android.webkit.WebChromeClient;
 import android.webkit.CookieManager;
 import android.webkit.URLUtil;
@@ -41,8 +42,8 @@ import java.util.ArrayList;
 
 public class MainActivity extends Activity {
     private static final int COLOR_BACKGROUND = Color.rgb(0, 0, 0);
-    private static final int COLOR_SURFACE = Color.rgb(32, 38, 50);
-    private static final int COLOR_ACCENT = Color.rgb(69, 196, 255);
+    private static final int COLOR_SURFACE = Color.rgb(25, 25, 25);
+    private static final int COLOR_ACCENT = Color.rgb(245, 245, 245);
 
     private final ArrayList<WebView> tabs = new ArrayList<>();
 
@@ -53,12 +54,14 @@ public class MainActivity extends Activity {
     private Button backButton;
     private Button forwardButton;
     private Button tabsButton;
+    private Button reloadButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().setStatusBarColor(COLOR_BACKGROUND);
         getWindow().setNavigationBarColor(COLOR_BACKGROUND);
+        setTitle("");
         buildInterface();
         createTab(BrowserSettings.getHomepage(this));
     }
@@ -67,81 +70,105 @@ public class MainActivity extends Activity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(COLOR_BACKGROUND);
-        root.setPadding(dp(10), dp(8), dp(10), dp(6));
-
-        LinearLayout addressRow = new LinearLayout(this);
-        addressRow.setGravity(Gravity.CENTER_VERTICAL);
-        addressRow.setOrientation(LinearLayout.HORIZONTAL);
-
-        addressBar = new EditText(this);
-        addressBar.setSingleLine(true);
-        addressBar.setLongClickable(false);
-        addressBar.setTextIsSelectable(false);
-        addressBar.setTextColor(Color.WHITE);
-        addressBar.setHintTextColor(Color.rgb(168, 178, 194));
-        addressBar.setHint("Search or enter address");
-        addressBar.setTextSize(14);
-        addressBar.setPadding(dp(14), 0, dp(10), 0);
-        addressBar.setImeOptions(EditorInfo.IME_ACTION_GO);
-        addressBar.setInputType(android.text.InputType.TYPE_CLASS_TEXT
-                | android.text.InputType.TYPE_TEXT_VARIATION_URI);
-
-        GradientDrawable addressBackground = new GradientDrawable();
-        addressBackground.setColor(COLOR_SURFACE);
-        addressBackground.setCornerRadius(dp(24));
-        addressBackground.setStroke(dp(1), Color.rgb(48, 59, 75));
-        addressBar.setBackground(addressBackground);
-        addressRow.addView(addressBar, new LinearLayout.LayoutParams(0, dp(46), 1));
-
-        Button goButton = createButton("➜", true);
-        LinearLayout.LayoutParams goParams = new LinearLayout.LayoutParams(dp(54), dp(46));
-        goParams.leftMargin = dp(7);
-        addressRow.addView(goButton, goParams);
-        Button menuButton = createButton("⋮", false);
-        LinearLayout.LayoutParams menuParams = new LinearLayout.LayoutParams(dp(42), dp(46));
-        menuParams.leftMargin = dp(5);
-        addressRow.addView(menuButton, menuParams);
-        root.addView(addressRow);
+        root.setPadding(dp(8), dp(2), dp(8), dp(5));
 
         progressBar = new ProgressBar(this, null,
                 android.R.attr.progressBarStyleHorizontal);
         progressBar.setMax(100);
         progressBar.setProgressTintList(
-                android.content.res.ColorStateList.valueOf(COLOR_ACCENT));
+                android.content.res.ColorStateList.valueOf(Color.WHITE));
         progressBar.setProgressBackgroundTintList(
                 android.content.res.ColorStateList.valueOf(COLOR_SURFACE));
+        progressBar.setVisibility(View.GONE);
         root.addView(progressBar, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(3)));
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(2)));
 
         webContainer = new LinearLayout(this);
         webContainer.setOrientation(LinearLayout.VERTICAL);
         root.addView(webContainer, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
 
-        LinearLayout navigation = new LinearLayout(this);
-        navigation.setGravity(Gravity.CENTER);
-        navigation.setOrientation(LinearLayout.HORIZONTAL);
-        navigation.setPadding(0, dp(6), 0, 0);
+        LinearLayout toolbar = new LinearLayout(this);
+        toolbar.setGravity(Gravity.CENTER_VERTICAL);
+        toolbar.setOrientation(LinearLayout.HORIZONTAL);
+        toolbar.setPadding(0, dp(6), 0, 0);
 
         backButton = createButton("‹", false);
         forwardButton = createButton("›", false);
-        Button homeButton = createButton("⌂", false);
-        Button reloadButton = createButton("↻", false);
         tabsButton = createButton("▢", false);
-        Button newTabButton = createButton("+", true);
+        Button menuButton = createButton("⋮", false);
+        reloadButton = createButton("↻", false);
 
-        addNavigationButton(navigation, backButton);
-        addNavigationButton(navigation, forwardButton);
-        addNavigationButton(navigation, homeButton);
-        addNavigationButton(navigation, reloadButton);
-        addNavigationButton(navigation, tabsButton);
-        addNavigationButton(navigation, newTabButton);
+        LinearLayout.LayoutParams controlParams =
+                new LinearLayout.LayoutParams(dp(38), dp(44));
+        controlParams.rightMargin = dp(3);
+        toolbar.addView(backButton, controlParams);
 
-        root.addView(navigation);
+        LinearLayout.LayoutParams forwardParams =
+                new LinearLayout.LayoutParams(dp(38), dp(44));
+        forwardParams.rightMargin = dp(4);
+        toolbar.addView(forwardButton, forwardParams);
+
+        LinearLayout addressContainer = new LinearLayout(this);
+        addressContainer.setGravity(Gravity.CENTER_VERTICAL);
+        addressContainer.setOrientation(LinearLayout.HORIZONTAL);
+
+        GradientDrawable addressBackground = new GradientDrawable();
+        addressBackground.setColor(COLOR_SURFACE);
+        addressBackground.setCornerRadius(dp(22));
+        addressBackground.setStroke(dp(1), Color.rgb(48, 48, 48));
+        addressContainer.setBackground(addressBackground);
+
+        addressBar = new EditText(this);
+        addressBar.setSingleLine(true);
+        addressBar.setTextIsSelectable(false);
+        addressBar.setTextColor(Color.WHITE);
+        addressBar.setHintTextColor(Color.rgb(155, 155, 155));
+        addressBar.setHint("Suchen oder Adresse eingeben");
+        addressBar.setTextSize(13);
+        addressBar.setPadding(dp(13), 0, dp(4), 0);
+        addressBar.setBackgroundColor(Color.TRANSPARENT);
+        addressBar.setImeOptions(EditorInfo.IME_ACTION_GO);
+        addressBar.setInputType(android.text.InputType.TYPE_CLASS_TEXT
+                | android.text.InputType.TYPE_TEXT_VARIATION_URI);
+        addressContainer.addView(addressBar, new LinearLayout.LayoutParams(
+                0, dp(44), 1));
+
+        reloadButton.setBackgroundColor(Color.TRANSPARENT);
+        reloadButton.setPadding(0, 0, 0, 0);
+        addressContainer.addView(reloadButton, new LinearLayout.LayoutParams(
+                dp(42), dp(42)));
+
+        LinearLayout.LayoutParams addressParams =
+                new LinearLayout.LayoutParams(0, dp(44), 1);
+        addressParams.rightMargin = dp(4);
+        toolbar.addView(addressContainer, addressParams);
+
+        LinearLayout.LayoutParams tabsParams =
+                new LinearLayout.LayoutParams(dp(38), dp(44));
+        tabsParams.rightMargin = dp(3);
+        toolbar.addView(tabsButton, tabsParams);
+
+        toolbar.addView(menuButton, new LinearLayout.LayoutParams(
+                dp(38), dp(44)));
+
+        root.addView(toolbar);
         com.shadow.apps.ui.SystemBars.apply(root);
         setContentView(root);
 
-        goButton.setOnClickListener(v -> navigateFromAddressBar());
+        backButton.setOnClickListener(v -> {
+            if (webView != null && webView.canGoBack()) webView.goBack();
+        });
+
+        forwardButton.setOnClickListener(v -> {
+            if (webView != null && webView.canGoForward()) webView.goForward();
+        });
+
+        reloadButton.setOnClickListener(v -> {
+            if (webView != null) webView.reload();
+        });
+
+        tabsButton.setOnClickListener(v -> showTabOverview());
         menuButton.setOnClickListener(v -> showBrowserDataMenu());
 
         addressBar.setOnEditorActionListener((view, actionId, event) -> {
@@ -155,30 +182,8 @@ public class MainActivity extends Activity {
             return false;
         });
 
-        backButton.setOnClickListener(v -> {
-            if (webView != null && webView.canGoBack()) {
-                webView.goBack();
-            }
-        });
-
-        forwardButton.setOnClickListener(v -> {
-            if (webView != null && webView.canGoForward()) {
-                webView.goForward();
-            }
-        });
-
-        homeButton.setOnClickListener(v -> {
-            if (webView != null) webView.loadUrl(BrowserSettings.getHomepage(this));
-        });
-
-        reloadButton.setOnClickListener(v -> {
-            if (webView != null) webView.reload();
-        });
-
-        tabsButton.setOnClickListener(v -> showTabOverview());
-        newTabButton.setOnClickListener(v -> createTab(BrowserSettings.getHomepage(this)));
+        updateNavigationButtons();
     }
-
     private void createTab(String url) {
         WebView newWebView = new WebView(this);
         tabs.add(newWebView);
@@ -237,7 +242,7 @@ public class MainActivity extends Activity {
 
     private String displayAddress(String url) {
         if (url == null || url.isEmpty()) return "";
-        if (url.startsWith("https://shadow.local")) return "Startseite";
+        if (url.startsWith("https://shadow.local")) return "";
         return url;
     }
 
@@ -460,38 +465,58 @@ public class MainActivity extends Activity {
             @Override
             public void onReceivedTitle(WebView view, String title) {
                 if (view == webView && title != null && !title.isEmpty()) {
-                    setTitle(title + " - Shadow Browser");
+                    setTitle(title);
                 }
             }
         });
     }
 
     private void showBrowserDataMenu() {
-        String[] options = {"Aktuelle Seite speichern", "Lesezeichen anzeigen", "Verlauf anzeigen", "Downloads anzeigen", "Datenschutz", "Einstellungen", "Auf Seite suchen"};
+        String[] options = {
+                "Neuer Tab",
+                "Lesezeichen hinzufügen",
+                "Lesezeichen",
+                "Verlauf",
+                "Downloads",
+                "Datenschutz",
+                "Einstellungen",
+                "Auf Seite suchen",
+                "Teilen"
+        };
+
         new AlertDialog.Builder(this)
-                .setTitle("Browser-Daten")
                 .setItems(options, (dialog, which) -> {
                     if (which == 0) {
-                        if (webView != null && webView.getUrl() != null) {
-                            BrowserDataStore.addBookmark(this, webView.getUrl(), webView.getTitle());
-                            Toast.makeText(this, "Lesezeichen gespeichert", Toast.LENGTH_SHORT).show();
-                        }
+                        createTab(BrowserSettings.getHomepage(this));
                     } else if (which == 1) {
-                        BrowserDataDialogs.show(this, webView, false);
+                        if (webView != null && webView.getUrl() != null) {
+                            BrowserDataStore.addBookmark(
+                                    this, webView.getUrl(), webView.getTitle());
+                            Toast.makeText(this, "Lesezeichen gespeichert",
+                                    Toast.LENGTH_SHORT).show();
+                        }
                     } else if (which == 2) {
-                        BrowserDataDialogs.show(this, webView, true);
+                        BrowserDataDialogs.show(this, webView, false);
                     } else if (which == 3) {
-                        DownloadDialogs.show(this);
+                        BrowserDataDialogs.show(this, webView, true);
                     } else if (which == 4) {
-                        PrivacyDialogs.show(this, webView);
+                        DownloadDialogs.show(this);
                     } else if (which == 5) {
-                        SettingsDialogs.show(this);
+                        PrivacyDialogs.show(this, webView);
                     } else if (which == 6) {
+                        SettingsDialogs.show(this);
+                    } else if (which == 7) {
                         FindInPageDialog.show(this, webView);
+                    } else if (which == 8 && webView != null
+                            && webView.getUrl() != null) {
+                        Intent share = new Intent(Intent.ACTION_SEND);
+                        share.setType("text/plain");
+                        share.putExtra(Intent.EXTRA_TEXT, webView.getUrl());
+                        startActivity(Intent.createChooser(share, "Seite teilen"));
                     }
-                }).show();
+                })
+                .show();
     }
-
     private void navigateFromAddressBar() {
         String input = addressBar.getText().toString().trim();
         if (input.isEmpty() || webView == null) return;

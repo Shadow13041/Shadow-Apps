@@ -4,41 +4,35 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>Shadow Browser</title>
+<title>New Tab</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:#000;color:#f0f3f8;font-family:Arial,sans-serif;display:flex;justify-content:center;align-items:center;padding:28px 20px}
-main{width:100%;max-width:560px}
-.brand{color:#45c4ff;font-size:12px;font-weight:bold;letter-spacing:5px}
-h1{font-size:36px;margin:12px 0 7px}
-p{color:#a8b2c2;margin:0 0 30px;font-size:14px}
-form{display:flex;gap:8px;padding:7px;background:#202632;border:1px solid #303b4b;border-radius:18px}
-input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:white;padding:11px;font-size:15px}
-button{border:0;border-radius:13px;padding:0 17px;background:#45c4ff;color:#00131d;font-weight:bold}
-h2{font-size:11px;letter-spacing:2px;color:#8793a5;margin:32px 0 13px}
-.links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
-a{display:block;padding:18px 16px;border:1px solid #303b4b;border-radius:16px;background:#202632;color:#f0f3f8;text-decoration:none;font-size:14px}
-a:active{background:#303b4b}
-footer{margin-top:38px;color:#667386;font-size:10px;letter-spacing:1px}
+body{margin:0;min-height:100vh;background:#000;color:#fff;font-family:Arial,sans-serif;padding:34px 20px}
+main{width:100%;max-width:560px;margin:0 auto}
+form{display:flex;align-items:center;gap:10px;padding:7px 15px;background:#191919;border:1px solid #303030;border-radius:18px}
+input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:#fff;padding:12px 0;font-size:15px}
+button{border:0;background:transparent;color:#fff;font-size:20px;padding:6px}
+h2{font-size:12px;font-weight:500;color:#999;margin:30px 0 13px}
+.links{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:90px;border:1px solid #292929;border-radius:16px;background:#171717;color:#eee;text-decoration:none;font-size:12px}
+a:active{background:#303030}
+.symbol{font-size:23px;font-weight:600}
+@media(max-width:380px){.links{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
 <main>
-<div class="brand">SHADOW</div>
-<h1>Shadow Browser</h1>
-<p>Was möchtest du heute entdecken?</p>
 <form action="https://www.google.com/search" method="get">
-<input name="q" type="search" placeholder="Im Web suchen …" aria-label="Suchbegriff">
-<button type="submit">Suchen</button>
+<input name="q" type="search" placeholder="Suchen oder Adresse eingeben" aria-label="Suchbegriff">
+<button type="submit" aria-label="Suchen">⌕</button>
 </form>
-<h2>SCHNELLZUGRIFF</h2>
+<h2>SCHNELLZUGRIFFE</h2>
 <div class="links">
-<a href="https://www.google.com/">Google</a>
-<a href="https://www.youtube.com/">YouTube</a>
-<a href="https://www.wikipedia.org/">Wikipedia</a>
-<a href="https://duckduckgo.com/">DuckDuckGo</a>
+<a href="https://www.google.com/"><span class="symbol">G</span>Google</a>
+<a href="https://www.youtube.com/"><span class="symbol">▶</span>YouTube</a>
+<a href="https://www.wikipedia.org/"><span class="symbol">W</span>Wikipedia</a>
+<a href="https://github.com/"><span class="symbol">⌘</span>GitHub</a>
 </div>
-<footer>SHADOW BROWSER · PRIVAT UND SCHNELL</footer>
 </main>
 </body>
 </html>
