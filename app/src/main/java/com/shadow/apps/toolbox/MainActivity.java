@@ -177,6 +177,14 @@ public class MainActivity extends Activity {
         TextView caption = text("Toolbox", 26, TEXT, true);
         drawer.addView(caption, lp(-1, dp(48)));
 
+        ScrollView drawerScroll = new ScrollView(this);
+        drawerScroll.setFillViewport(true);
+        drawerScroll.setVerticalScrollBarEnabled(false);
+        drawerItems = new LinearLayout(this);
+        drawerItems.setOrientation(LinearLayout.VERTICAL);
+        drawerScroll.addView(drawerItems, new ScrollView.LayoutParams(-1, -2));
+        drawer.addView(drawerScroll, new LinearLayout.LayoutParams(-1, 0, 1f));
+
         String[] sections = {
                 "Developer Infos", "Shadow AI", "Shadow Files", "Developer Tools", "Shadow Studio",
                 "Shadow Network", "Shadow Automation", "Shadow Terminal", "Shadow Remote", "Shadow Update Center",
