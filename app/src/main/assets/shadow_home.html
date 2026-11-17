@@ -7,32 +7,92 @@
 <title>New Tab</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:#000;color:#fff;font-family:Arial,sans-serif;padding:34px 20px}
-main{width:100%;max-width:560px;margin:0 auto}
-form{display:flex;align-items:center;gap:10px;padding:7px 15px;background:#191919;border:1px solid #303030;border-radius:18px}
-input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:#fff;padding:12px 0;font-size:15px}
-button{border:0;background:transparent;color:#fff;font-size:20px;padding:6px}
-h2{font-size:12px;font-weight:500;color:#999;margin:30px 0 13px}
-.links{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:90px;border:1px solid #292929;border-radius:16px;background:#171717;color:#eee;text-decoration:none;font-size:12px}
-a:active{background:#303030}
-.symbol{font-size:23px;font-weight:600}
-@media(max-width:380px){.links{grid-template-columns:repeat(2,minmax(0,1fr))}}
+:root{color-scheme:dark}
+body{
+ margin:0;min-height:100vh;background:#000;color:#f1f4f8;
+ font-family:Roboto,Arial,sans-serif;
+ padding:clamp(28px,9vh,100px) 20px 40px;
+}
+main{width:100%;max-width:620px;margin:0 auto}
+.search{
+ display:flex;align-items:center;gap:12px;
+ padding:5px 16px;background:#191f29;
+ border:1px solid #303b4b;border-radius:24px;
+ transition:border-color .15s;
+}
+.search:focus-within{border-color:#55cfff}
+.search-icon{font-size:21px;color:#a8b2c2}
+input{
+ flex:1;min-width:0;border:0;outline:0;
+ background:transparent;color:#fff;
+ padding:13px 0;font-size:15px;
+}
+button{
+ border:0;background:transparent;color:#55cfff;
+ font-size:22px;padding:7px;cursor:pointer;
+}
+h2{
+ margin:34px 2px 14px;color:#a8b2c2;
+ font-size:11px;font-weight:600;letter-spacing:1.3px;
+}
+.links{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+ gap:12px;
+}
+a{
+ min-width:0;min-height:100px;padding:13px 5px;
+ display:flex;flex-direction:column;align-items:center;
+ justify-content:center;gap:11px;
+ background:#151a22;border:1px solid #293341;
+ border-radius:17px;color:#e9edf4;
+ text-decoration:none;font-size:12px;
+ transition:background .15s,border-color .15s;
+}
+a:active{background:#252e3b;border-color:#55cfff}
+.symbol{
+ width:38px;height:38px;border-radius:13px;
+ display:grid;place-items:center;
+ background:#202a37;color:#55cfff;
+ font-size:21px;font-weight:600;
+}
+@media(max-width:390px){
+ body{padding-left:15px;padding-right:15px}
+ .links{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+ a{min-height:92px}
+}
 </style>
 </head>
 <body>
 <main>
-<form action="https://www.google.com/search" method="get">
-<input name="q" type="search" placeholder="Suchen oder Adresse eingeben" aria-label="Suchbegriff">
-<button type="submit" aria-label="Suchen">⌕</button>
+<form class="search" id="search">
+ <span class="search-icon">⌕</span>
+ <input id="query" type="search"
+  placeholder="Suchen oder Adresse eingeben"
+  aria-label="Suchbegriff" autocomplete="off">
+ <button type="submit" aria-label="Suchen">➜</button>
 </form>
+
 <h2>SCHNELLZUGRIFFE</h2>
 <div class="links">
-<a href="https://www.google.com/"><span class="symbol">G</span>Google</a>
-<a href="https://www.youtube.com/"><span class="symbol">▶</span>YouTube</a>
-<a href="https://www.wikipedia.org/"><span class="symbol">W</span>Wikipedia</a>
-<a href="https://github.com/"><span class="symbol">⌘</span>GitHub</a>
+ <a href="https://www.google.com/"><span class="symbol">G</span>Google</a>
+ <a href="https://duckduckgo.com/"><span class="symbol">D</span>DuckDuckGo</a>
+ <a href="https://www.bing.com/"><span class="symbol">B</span>Bing</a>
+ <a href="https://search.brave.com/"><span class="symbol">B</span>Brave</a>
+ <a href="https://www.youtube.com/"><span class="symbol">▶</span>YouTube</a>
+ <a href="https://www.wikipedia.org/"><span class="symbol">W</span>Wikipedia</a>
+ <a href="https://github.com/"><span class="symbol">⌘</span>GitHub</a>
+ <a href="https://www.reddit.com/"><span class="symbol">R</span>Reddit</a>
 </div>
 </main>
+<script>
+document.getElementById("search").addEventListener("submit",function(e){
+ e.preventDefault();
+ const q=document.getElementById("query").value.trim();
+ if(!q)return;
+ const isUrl=/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(:[0-9]+)?(\/.*)?$/.test(q);
+ location.href=isUrl?"https://"+q:
+  "https://www.google.com/search?q="+encodeURIComponent(q);
+});
+</script>
 </body>
 </html>
