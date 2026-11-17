@@ -55,6 +55,7 @@ public class MainActivity extends Activity {
     private Button forwardButton;
     private Button tabsButton;
     private Button reloadButton;
+    private Button customButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,7 +67,7 @@ public class MainActivity extends Activity {
         createTab(BrowserSettings.getHomepage(this));
     }
 
-    private void buildInterface() {
+        private void buildInterface() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(COLOR_BACKGROUND);
@@ -80,13 +81,11 @@ public class MainActivity extends Activity {
         progressBar.setProgressBackgroundTintList(
                 android.content.res.ColorStateList.valueOf(COLOR_SURFACE));
         progressBar.setVisibility(View.GONE);
-        root.addView(progressBar, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(2)));
+        root.addView(progressBar, new LinearLayout.LayoutParams(-1, dp(2)));
 
         webContainer = new LinearLayout(this);
         webContainer.setOrientation(LinearLayout.VERTICAL);
-        root.addView(webContainer, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
+        root.addView(webContainer, new LinearLayout.LayoutParams(-1, 0, 1));
 
         LinearLayout toolbar = new LinearLayout(this);
         toolbar.setGravity(Gravity.CENTER_VERTICAL);
@@ -95,19 +94,13 @@ public class MainActivity extends Activity {
 
         backButton = createButton("‹", false);
         forwardButton = createButton("›", false);
-        tabsButton = createButton("▢", false);
-        Button menuButton = createButton("⋮", false);
         reloadButton = createButton("↻", false);
+        customButton = createButton("▢", false);
+        tabsButton = customButton;
+        Button menuButton = createButton("⋮", false);
 
-        LinearLayout.LayoutParams controlParams =
-                new LinearLayout.LayoutParams(dp(38), dp(44));
-        controlParams.rightMargin = dp(3);
-        toolbar.addView(backButton, controlParams);
-
-        LinearLayout.LayoutParams forwardParams =
-                new LinearLayout.LayoutParams(dp(38), dp(44));
-        forwardParams.rightMargin = dp(4);
-        toolbar.addView(forwardButton, forwardParams);
+        toolbar.addView(backButton, new LinearLayout.LayoutParams(dp(34), dp(44)));
+        toolbar.addView(forwardButton, new LinearLayout.LayoutParams(dp(34), dp(44)));
 
         LinearLayout addressContainer = new LinearLayout(this);
         addressContainer.setGravity(Gravity.CENTER_VERTICAL);
@@ -126,31 +119,25 @@ public class MainActivity extends Activity {
         addressBar.setHintTextColor(Color.rgb(155, 155, 155));
         addressBar.setHint("Suchen oder Adresse eingeben");
         addressBar.setTextSize(13);
-        addressBar.setPadding(dp(13), 0, dp(4), 0);
+        addressBar.setPadding(dp(12), 0, dp(4), 0);
         addressBar.setBackgroundColor(Color.TRANSPARENT);
         addressBar.setImeOptions(EditorInfo.IME_ACTION_GO);
         addressBar.setInputType(android.text.InputType.TYPE_CLASS_TEXT
                 | android.text.InputType.TYPE_TEXT_VARIATION_URI);
-        addressContainer.addView(addressBar, new LinearLayout.LayoutParams(
-                0, dp(44), 1));
+        addressContainer.addView(addressBar, new LinearLayout.LayoutParams(0, dp(44), 1));
 
         reloadButton.setBackgroundColor(Color.TRANSPARENT);
         reloadButton.setPadding(0, 0, 0, 0);
-        addressContainer.addView(reloadButton, new LinearLayout.LayoutParams(
-                dp(42), dp(42)));
+        addressContainer.addView(reloadButton, new LinearLayout.LayoutParams(dp(36), dp(42)));
 
         LinearLayout.LayoutParams addressParams =
                 new LinearLayout.LayoutParams(0, dp(44), 1);
-        addressParams.rightMargin = dp(4);
+        addressParams.leftMargin = dp(3);
+        addressParams.rightMargin = dp(3);
         toolbar.addView(addressContainer, addressParams);
 
-        LinearLayout.LayoutParams tabsParams =
-                new LinearLayout.LayoutParams(dp(38), dp(44));
-        tabsParams.rightMargin = dp(3);
-        toolbar.addView(tabsButton, tabsParams);
-
-        toolbar.addView(menuButton, new LinearLayout.LayoutParams(
-                dp(38), dp(44)));
+        toolbar.addView(customButton, new LinearLayout.LayoutParams(dp(36), dp(44)));
+        toolbar.addView(menuButton, new LinearLayout.LayoutParams(dp(34), dp(44)));
 
         root.addView(toolbar);
         com.shadow.apps.ui.SystemBars.apply(root);
@@ -159,16 +146,13 @@ public class MainActivity extends Activity {
         backButton.setOnClickListener(v -> {
             if (webView != null && webView.canGoBack()) webView.goBack();
         });
-
         forwardButton.setOnClickListener(v -> {
             if (webView != null && webView.canGoForward()) webView.goForward();
         });
-
         reloadButton.setOnClickListener(v -> {
             if (webView != null) webView.reload();
         });
-
-        tabsButton.setOnClickListener(v -> showTabOverview());
+        customButton.setOnClickListener(v -> showCustomActionDialog());
         menuButton.setOnClickListener(v -> showBrowserDataMenu());
 
         addressBar.setOnEditorActionListener((view, actionId, event) -> {
@@ -182,8 +166,11 @@ public class MainActivity extends Activity {
             return false;
         });
 
+        refreshCustomButton();
         updateNavigationButtons();
     }
+
+
     private void createTab(String url) {
         WebView newWebView = new WebView(this);
         tabs.add(newWebView);
@@ -371,9 +358,7 @@ public class MainActivity extends Activity {
     }
 
     private void updateTabButton() {
-        if (tabsButton != null) {
-            tabsButton.setText(String.valueOf(tabs.size()));
-        }
+        refreshCustomButton();
     }
 
     private void configureWebView(WebView target) {
@@ -470,6 +455,93 @@ public class MainActivity extends Activity {
             }
         });
     }
+
+        private String getCustomAction() {
+        return getSharedPreferences("browser_ui", MODE_PRIVATE)
+                .getString("custom_action", "tabs");
+    }
+
+    private void refreshCustomButton() {
+        if (customButton == null) return;
+
+        String action = getCustomAction();
+        String symbol;
+        String description;
+
+        switch (action) {
+            case "home":
+                symbol = "⌂";
+                description = "Startseite";
+                break;
+            case "bookmarks":
+                symbol = "★";
+                description = "Lesezeichen";
+                break;
+            case "history":
+                symbol = "◷";
+                description = "Verlauf";
+                break;
+            case "downloads":
+                symbol = "↓";
+                description = "Downloads";
+                break;
+            default:
+                symbol = String.valueOf(tabs.size());
+                description = "Tabs";
+                break;
+        }
+
+        customButton.setCompoundDrawables(null, null, null, null);
+        customButton.setText(symbol);
+        customButton.setContentDescription(description);
+    }
+
+    private void performCustomAction() {
+        switch (getCustomAction()) {
+            case "home":
+                if (webView != null) webView.loadUrl(BrowserSettings.getHomepage(this));
+                break;
+            case "bookmarks":
+                BrowserDataDialogs.show(this, webView, false);
+                break;
+            case "history":
+                BrowserDataDialogs.show(this, webView, true);
+                break;
+            case "downloads":
+                DownloadDialogs.show(this);
+                break;
+            default:
+                showTabOverview();
+                break;
+        }
+    }
+
+    private void showCustomActionDialog() {
+        String[] labels = {
+                "Tabs", "Startseite", "Lesezeichen", "Verlauf", "Downloads"
+        };
+        String[] values = {
+                "tabs", "home", "bookmarks", "history", "downloads"
+        };
+
+        String current = getCustomAction();
+        int selected = 0;
+        for (int i = 0; i < values.length; i++) {
+            if (values[i].equals(current)) selected = i;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Funktion der Schaltfläche")
+                .setSingleChoiceItems(labels, selected, (dialog, which) -> {
+                    getSharedPreferences("browser_ui", MODE_PRIVATE)
+                            .edit().putString("custom_action", values[which]).apply();
+                    refreshCustomButton();
+                    dialog.dismiss();
+                })
+                .setNegativeButton("Abbrechen", null)
+                .show();
+    }
+
 
     private void showBrowserDataMenu() {
         String[] options = {
