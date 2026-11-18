@@ -37,6 +37,22 @@ public final class BrowserSettings {
         prefs(context).edit().putString("search_engine", engine).apply();
     }
 
+    public static boolean isDataSaverEnabled(Context context) {
+        return prefs(context).getBoolean("data_saver", false);
+    }
+
+    public static void setDataSaverEnabled(Context context, boolean enabled) {
+        prefs(context).edit().putBoolean("data_saver", enabled).apply();
+    }
+
+    public static boolean isCachePreferred(Context context) {
+        return prefs(context).getBoolean("cache_preferred", false);
+    }
+
+    public static void setCachePreferred(Context context, boolean enabled) {
+        prefs(context).edit().putBoolean("cache_preferred", enabled).apply();
+    }
+
     public static String buildSearchUrl(Context context, String query)
             throws Exception {
         String encoded = URLEncoder.encode(

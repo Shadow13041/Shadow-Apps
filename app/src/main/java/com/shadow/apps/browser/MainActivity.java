@@ -63,6 +63,11 @@ public class MainActivity extends Activity {
 
     private WebView webView;
     private ValueCallback<Uri[]> fileChooserCallback;
+    private static final int GEOLOCATION_REQUEST = 5101;
+    private static final int CAMERA_REQUEST = 5102;
+    private android.webkit.GeolocationPermissions.Callback pendingGeoCallback;
+    private String pendingGeoOrigin;
+    private android.webkit.PermissionRequest pendingWebPermission;
     private static final int FILE_CHOOSER_REQUEST = 4102;
     private boolean desktopMode;
     private String mobileUserAgent;
@@ -259,7 +264,8 @@ public class MainActivity extends Activity {
         newWebView.getSettings().setJavaScriptEnabled(
                 SitePermissionStore.isJavaScriptAllowed(this, url));
         newWebView.getSettings().setBlockNetworkImage(
-                !SitePermissionStore.areImagesAllowed(this, url));
+                BrowserSettings.isDataSaverEnabled(this)
+                || !SitePermissionStore.areImagesAllowed(this, url));
         newWebView.setVisibility(View.VISIBLE);
         addressBar.setText(displayAddress(url));
         updateTabButton();
@@ -517,6 +523,9 @@ public class MainActivity extends Activity {
         settings.setUserAgentString(desktopMode ? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" : mobileUserAgent);
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
+        settings.setCacheMode(BrowserSettings.isCachePreferred(this)
+                ? WebSettings.LOAD_CACHE_ELSE_NETWORK
+                : WebSettings.LOAD_DEFAULT);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
         settings.setSupportZoom(true);
@@ -526,6 +535,7 @@ public class MainActivity extends Activity {
         android.webkit.CookieManager.getInstance().setAcceptThirdPartyCookies(
                 target, !PrivacySettings.blockThirdPartyCookies(this));
         settings.setAllowFileAccess(false);
+        settings.setBlockNetworkLoads(false);
         settings.setAllowContentAccess(false);
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
         settings.setSupportMultipleWindows(true);
@@ -593,11 +603,19 @@ public class MainActivity extends Activity {
             public void onPageStarted(WebView view, String url,
                     android.graphics.Bitmap favicon) {
                 if (url != null) {
+                    if (url.startsWith("file://")) {
+                        view.getSettings().setJavaScriptEnabled(false);
+                        view.getSettings().setBlockNetworkLoads(true);
+                    } else {
+                        view.getSettings().setAllowFileAccess(false);
+                        view.getSettings().setBlockNetworkLoads(false);
+                    }
                     view.getSettings().setJavaScriptEnabled(
                             SitePermissionStore.isJavaScriptAllowed(
                                     MainActivity.this, url));
                     view.getSettings().setBlockNetworkImage(
-                            !SitePermissionStore.areImagesAllowed(
+                            BrowserSettings.isDataSaverEnabled(MainActivity.this)
+                            || !SitePermissionStore.areImagesAllowed(
                                     MainActivity.this, url));
                 }
                 super.onPageStarted(view, url, favicon);
@@ -639,6 +657,63 @@ public class MainActivity extends Activity {
         });
 
         target.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onGeolocationPermissionsShowPrompt(
+                    String origin,
+                    android.webkit.GeolocationPermissions.Callback callback) {
+                if (!SitePermissionStore.isLocationAllowed(
+                        MainActivity.this, origin)) {
+                    callback.invoke(origin, false, false);
+                    return;
+                }
+
+                if (Build.VERSION.SDK_INT < 23
+                        || checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                        == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    callback.invoke(origin, true, false);
+                    return;
+                }
+
+                pendingGeoOrigin = origin;
+                pendingGeoCallback = callback;
+                requestPermissions(
+                        new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                        GEOLOCATION_REQUEST);
+            }
+
+            @Override
+            public void onPermissionRequest(
+                    android.webkit.PermissionRequest request) {
+                runOnUiThread(() -> {
+                    boolean wantsCamera = false;
+                    for (String resource : request.getResources()) {
+                        if (android.webkit.PermissionRequest.RESOURCE_VIDEO_CAPTURE
+                                .equals(resource)) {
+                            wantsCamera = true;
+                        }
+                    }
+
+                    if (!wantsCamera || webView == null
+                            || !SitePermissionStore.isCameraAllowed(
+                                    MainActivity.this, webView.getUrl())) {
+                        request.deny();
+                        return;
+                    }
+
+                    if (Build.VERSION.SDK_INT < 23
+                            || checkSelfPermission(android.Manifest.permission.CAMERA)
+                            == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                        request.grant(new String[]{
+                                android.webkit.PermissionRequest.RESOURCE_VIDEO_CAPTURE
+                        });
+                    } else {
+                        pendingWebPermission = request;
+                        requestPermissions(
+                                new String[]{android.Manifest.permission.CAMERA},
+                                CAMERA_REQUEST);
+                    }
+                });
+            }
             @Override
             public boolean onCreateWindow(WebView view, boolean isDialog,
                     boolean isUserGesture, Message resultMsg) {
@@ -878,7 +953,9 @@ public class MainActivity extends Activity {
                 "Desktopwebsite: " + (desktopMode ? "Ein" : "Aus"),
                 "Lesemodus",
                 "Website-Berechtigungen",
-                "Tab-Gruppen verwalten"
+                "Tab-Gruppen verwalten",
+                "Website-Informationen",
+                "Offline-Archive"
         };
 
         new AlertDialog.Builder(this)
@@ -919,6 +996,10 @@ public class MainActivity extends Activity {
                         Toast.makeText(this,
                                 "Tab lange drücken, um eine Gruppe zuzuordnen.",
                                 Toast.LENGTH_LONG).show();
+                    } else if (which == 13) {
+                        SiteInfoDialog.show(this, webView);
+                    } else if (which == 14) {
+                        ArchiveDialogs.show(this, webView);
                     } else if (which == 9) {
                         desktopMode = !desktopMode;
                         getSharedPreferences("shadow_browser", MODE_PRIVATE).edit().putBoolean("desktop_mode", desktopMode).apply();
@@ -1189,6 +1270,41 @@ private boolean handleInternalUrl(WebView view, String url) {
     private int dp(int value) {
         return Math.round(value * getResources()
                 .getDisplayMetrics().density);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+            String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == GEOLOCATION_REQUEST) {
+            boolean granted = grantResults.length > 0
+                    && grantResults[0]
+                    == android.content.pm.PackageManager.PERMISSION_GRANTED;
+
+            if (pendingGeoCallback != null && pendingGeoOrigin != null) {
+                pendingGeoCallback.invoke(pendingGeoOrigin, granted, false);
+            }
+            pendingGeoCallback = null;
+            pendingGeoOrigin = null;
+        } else if (requestCode == CAMERA_REQUEST) {
+            boolean granted = grantResults.length > 0
+                    && grantResults[0]
+                    == android.content.pm.PackageManager.PERMISSION_GRANTED;
+
+            android.webkit.PermissionRequest request = pendingWebPermission;
+            pendingWebPermission = null;
+
+            if (request != null) {
+                if (granted) {
+                    request.grant(new String[]{
+                            android.webkit.PermissionRequest.RESOURCE_VIDEO_CAPTURE
+                    });
+                } else {
+                    request.deny();
+                }
+            }
+        }
     }
 
     @Override

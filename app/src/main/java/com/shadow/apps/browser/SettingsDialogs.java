@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -52,9 +53,19 @@ public final class SettingsDialogs {
         searchEngine.setSelection(selected);
         layout.addView(searchEngine);
 
+        CheckBox dataSaver = new CheckBox(activity);
+        dataSaver.setText("Datensparmodus (Bilder blockieren)");
+        dataSaver.setChecked(BrowserSettings.isDataSaverEnabled(activity));
+        layout.addView(dataSaver);
+
+        CheckBox cache = new CheckBox(activity);
+        cache.setText("Cache bevorzugen (Offline-Inhalte)");
+        cache.setChecked(BrowserSettings.isCachePreferred(activity));
+        layout.addView(cache);
+
         new AlertDialog.Builder(activity)
                 .setTitle("Browser-Einstellungen")
-                .setMessage("Startseite und Standardsuchmaschine")
+                .setMessage("Startseite, Suchmaschine und Leistung")
                 .setView(layout)
                 .setPositiveButton("Speichern", (dialog, which) -> {
                     String url = homepage.getText().toString().trim();
@@ -77,6 +88,10 @@ public final class SettingsDialogs {
 
                     BrowserSettings.setSearchEngine(activity,
                             String.valueOf(searchEngine.getSelectedItem()));
+                    BrowserSettings.setDataSaverEnabled(activity,
+                            dataSaver.isChecked());
+                    BrowserSettings.setCachePreferred(activity,
+                            cache.isChecked());
 
                     Toast.makeText(activity, "Einstellungen gespeichert",
                             Toast.LENGTH_SHORT).show();
