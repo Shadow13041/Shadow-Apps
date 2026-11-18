@@ -77,7 +77,25 @@ public class MainActivity extends Activity {
         setTitle("");
         desktopMode = getSharedPreferences("shadow_browser", MODE_PRIVATE).getBoolean("desktop_mode", false);
         buildInterface();
-        createTab(BrowserSettings.getHomepage(this));
+
+        ArrayList<String> savedTabs = savedInstanceState == null
+                ? null : savedInstanceState.getStringArrayList("shadow_saved_tabs");
+        if (savedTabs == null || savedTabs.isEmpty()) {
+            createTab(BrowserSettings.getHomepage(this));
+        } else {
+            for (String savedUrl : savedTabs) {
+                if (savedUrl != null && (savedUrl.startsWith("https://")
+                        || savedUrl.startsWith("http://"))) {
+                    createTab(savedUrl);
+                }
+            }
+            if (tabs.isEmpty()) {
+                createTab(BrowserSettings.getHomepage(this));
+            } else {
+                int selected = savedInstanceState.getInt("shadow_selected_tab", 0);
+                switchTab(Math.max(0, Math.min(selected, tabs.size() - 1)));
+            }
+        }
     }
 
         private void buildInterface() {
@@ -929,6 +947,23 @@ private boolean handleInternalUrl(WebView view, String url) {
             fileChooserCallback.onReceiveValue(results);
             fileChooserCallback = null;
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        ArrayList<String> savedTabs = new ArrayList<>();
+        for (WebView tab : tabs) {
+            String url = tab.getUrl();
+            if (url != null && (url.startsWith("https://")
+                    || url.startsWith("http://"))) {
+                savedTabs.add(url);
+            }
+        }
+
+        outState.putStringArrayList("shadow_saved_tabs", savedTabs);
+        outState.putInt("shadow_selected_tab", Math.max(0, tabs.indexOf(webView)));
     }
 
     @Override
