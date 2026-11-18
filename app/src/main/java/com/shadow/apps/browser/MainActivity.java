@@ -16,6 +16,7 @@ import android.os.Build;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.content.Context;
@@ -63,6 +64,9 @@ public class MainActivity extends Activity {
     private Button tabsButton;
     private Button reloadButton;
     private Button customButton;
+    private View fullscreenView;
+    private WebChromeClient.CustomViewCallback fullscreenCallback;
+    private int normalSystemUiVisibility;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -516,6 +520,32 @@ public class MainActivity extends Activity {
             }
 
             @Override
+            public void onShowCustomView(View view, WebChromeClient.CustomViewCallback callback) {
+                if (fullscreenView != null) {
+                    callback.onCustomViewHidden();
+                    return;
+                }
+                fullscreenView = view;
+                fullscreenCallback = callback;
+                View decor = getWindow().getDecorView();
+                normalSystemUiVisibility = decor.getSystemUiVisibility();
+                ((ViewGroup) decor).addView(view,
+                        new ViewGroup.LayoutParams(-1, -1));
+                decor.setSystemUiVisibility(
+                        View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+            }
+
+            @Override
+            public void onHideCustomView() {
+                hideFullscreenVideo();
+            }
+
+            @Override
             public void onProgressChanged(WebView view, int newProgress) {
                 if (view == webView) {
                     progressBar.setProgress(newProgress);
@@ -533,7 +563,20 @@ public class MainActivity extends Activity {
         });
     }
 
-        private String getCustomAction() {
+        private void hideFullscreenVideo() {
+        if (fullscreenView == null) return;
+        View view = fullscreenView;
+        WebChromeClient.CustomViewCallback callback = fullscreenCallback;
+        fullscreenView = null;
+        fullscreenCallback = null;
+        if (view.getParent() instanceof ViewGroup) {
+            ((ViewGroup) view.getParent()).removeView(view);
+        }
+        getWindow().getDecorView().setSystemUiVisibility(normalSystemUiVisibility);
+        if (callback != null) callback.onCustomViewHidden();
+    }
+
+    private String getCustomAction() {
         return getSharedPreferences("browser_ui", MODE_PRIVATE)
                 .getString("custom_action", "tabs");
     }
@@ -840,6 +883,10 @@ private boolean handleInternalUrl(WebView view, String url) {
 
     @Override
     public void onBackPressed() {
+        if (fullscreenView != null) {
+            hideFullscreenVideo();
+            return;
+        }
         if (webView != null && webView.canGoBack()) {
             webView.goBack();
         } else if (tabs.size() > 1) {
@@ -851,6 +898,7 @@ private boolean handleInternalUrl(WebView view, String url) {
 
     @Override
     protected void onDestroy() {
+        hideFullscreenVideo();
         if (fileChooserCallback != null) {
             fileChooserCallback.onReceiveValue(null);
             fileChooserCallback = null;
