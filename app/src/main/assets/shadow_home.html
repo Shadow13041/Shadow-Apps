@@ -8,58 +8,37 @@
 <style>
 *{box-sizing:border-box}
 :root{color-scheme:dark}
-body{
- margin:0;min-height:100vh;background:#000;color:#f1f4f8;
- font-family:Roboto,Arial,sans-serif;
- padding:clamp(28px,9vh,100px) 20px 40px;
-}
+body{margin:0;min-height:100vh;background:#000;color:#f1f4f8;
+font-family:Roboto,Arial,sans-serif;padding:clamp(28px,9vh,100px) 20px 40px}
 main{width:100%;max-width:620px;margin:0 auto}
-.search{
- display:flex;align-items:center;gap:12px;
- padding:5px 16px;background:#191f29;
- border:1px solid #303b4b;border-radius:24px;
- transition:border-color .15s;
-}
+.search{display:flex;align-items:center;gap:12px;padding:5px 16px;
+background:#191f29;border:1px solid #303b4b;border-radius:24px}
 .search:focus-within{border-color:#55cfff}
 .search-icon{font-size:21px;color:#a8b2c2}
-input{
- flex:1;min-width:0;border:0;outline:0;
- background:transparent;color:#fff;
- padding:13px 0;font-size:15px;
-}
-button{
- border:0;background:transparent;color:#55cfff;
- font-size:22px;padding:7px;cursor:pointer;
-}
-h2{
- margin:34px 2px 14px;color:#a8b2c2;
- font-size:11px;font-weight:600;letter-spacing:1.3px;
-}
-.links{
- display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
- gap:12px;
-}
-a{
- min-width:0;min-height:100px;padding:13px 5px;
- display:flex;flex-direction:column;align-items:center;
- justify-content:center;gap:11px;
- background:#151a22;border:1px solid #293341;
- border-radius:17px;color:#e9edf4;
- text-decoration:none;font-size:12px;
- transition:background .15s,border-color .15s;
-}
-a:active{background:#252e3b;border-color:#55cfff}
-.symbol{
- width:38px;height:38px;border-radius:13px;
- display:grid;place-items:center;
- background:#202a37;color:#55cfff;
- font-size:21px;font-weight:600;
-}
-@media(max-width:390px){
- body{padding-left:15px;padding-right:15px}
- .links{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
- a{min-height:92px}
-}
+input{flex:1;min-width:0;border:0;outline:0;background:transparent;
+color:#fff;padding:13px 0;font-size:15px}
+button{border:0;background:transparent;color:#55cfff;font-size:18px;
+padding:7px;cursor:pointer}
+h2{margin:34px 2px 14px;color:#a8b2c2;font-size:11px;
+font-weight:600;letter-spacing:1.3px}
+.links{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.tile{position:relative;min-width:0;min-height:100px;padding:13px 5px;
+display:flex;flex-direction:column;align-items:center;justify-content:center;
+gap:11px;background:#151a22;border:1px solid #293341;border-radius:17px;
+color:#e9edf4;text-decoration:none;font-size:12px}
+.tile:active{background:#252e3b;border-color:#55cfff}
+.symbol{width:38px;height:38px;border-radius:13px;display:grid;
+place-items:center;background:#202a37;color:#55cfff;
+font-size:21px;font-weight:600}
+.tile-tools{display:flex;gap:2px;position:absolute;top:3px;right:3px}
+.tile-tools button{padding:2px 5px;font-size:11px;background:#151a22;
+border:1px solid #303b4b;border-radius:7px}
+.tools{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.tools button{font-size:12px;background:#151a22;border:1px solid #303b4b;
+border-radius:12px;padding:8px 11px}
+@media(max-width:390px){body{padding-left:15px;padding-right:15px}
+.links{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.tile{min-height:92px}}
 </style>
 </head>
 <body>
@@ -73,25 +52,140 @@ a:active{background:#252e3b;border-color:#55cfff}
 </form>
 
 <h2>SCHNELLZUGRIFFE</h2>
-<div class="links">
- <a href="https://www.google.com/"><span class="symbol">G</span>Google</a>
- <a href="https://duckduckgo.com/"><span class="symbol">D</span>DuckDuckGo</a>
- <a href="https://www.bing.com/"><span class="symbol">B</span>Bing</a>
- <a href="https://search.brave.com/"><span class="symbol">B</span>Brave</a>
- <a href="https://www.youtube.com/"><span class="symbol">▶</span>YouTube</a>
- <a href="https://www.wikipedia.org/"><span class="symbol">W</span>Wikipedia</a>
- <a href="https://github.com/"><span class="symbol">⌘</span>GitHub</a>
- <a href="https://www.reddit.com/"><span class="symbol">R</span>Reddit</a>
+<div class="links" id="links"></div>
+<div class="tools">
+ <button id="add" type="button">＋ Hinzufügen</button>
+ <button id="reset" type="button">Zurücksetzen</button>
 </div>
 </main>
 <script>
+const defaults=[
+ ["Google","https://www.google.com/","G"],
+ ["DuckDuckGo","https://duckduckgo.com/","D"],
+ ["Bing","https://www.bing.com/","B"],
+ ["Brave","https://search.brave.com/","B"],
+ ["YouTube","https://www.youtube.com/","▶"],
+ ["Wikipedia","https://www.wikipedia.org/","W"],
+ ["GitHub","https://github.com/","⌘"],
+ ["Reddit","https://www.reddit.com/","R"]
+];
+
+let links;
+try {
+ links=JSON.parse(localStorage.getItem("shadow_shortcuts"))||defaults;
+} catch(e) {
+ links=defaults.map(x=>x.slice());
+}
+
+function save(){
+ localStorage.setItem("shadow_shortcuts",JSON.stringify(links));
+ render();
+}
+
+function render(){
+ const root=document.getElementById("links");
+ root.innerHTML="";
+
+ links.forEach((item,index)=>{
+  const a=document.createElement("a");
+  a.className="tile";
+  a.href=item[1];
+
+  const symbol=document.createElement("span");
+  symbol.className="symbol";
+  symbol.textContent=item[2]||item[0].charAt(0).toUpperCase();
+
+  const name=document.createElement("span");
+  name.textContent=item[0];
+  a.append(symbol,name);
+
+  const tools=document.createElement("span");
+  tools.className="tile-tools";
+
+  const up=document.createElement("button");
+  up.type="button";
+  up.textContent="↑";
+  up.onclick=e=>{
+   e.preventDefault();e.stopPropagation();
+   if(index>0){
+    [links[index-1],links[index]]=[links[index],links[index-1]];
+    save();
+   }
+  };
+
+  const down=document.createElement("button");
+  down.type="button";
+  down.textContent="↓";
+  down.onclick=e=>{
+   e.preventDefault();e.stopPropagation();
+   if(index<links.length-1){
+    [links[index+1],links[index]]=[links[index],links[index+1]];
+    save();
+   }
+  };
+
+  const edit=document.createElement("button");
+  edit.type="button";
+  edit.textContent="✎";
+  edit.onclick=e=>{
+   e.preventDefault();e.stopPropagation();
+   const n=prompt("Name",item[0]);
+   if(n===null)return;
+   const u=prompt("Adresse (https://...)",item[1]);
+   if(u===null)return;
+   if(!/^https?:\/\//i.test(u)){
+    alert("Bitte eine gültige HTTP(S)-Adresse eingeben.");
+    return;
+   }
+   links[index]=[n.trim()||u,u,n.trim().charAt(0).toUpperCase()];
+   save();
+  };
+
+  const del=document.createElement("button");
+  del.type="button";
+  del.textContent="×";
+  del.onclick=e=>{
+   e.preventDefault();e.stopPropagation();
+   links.splice(index,1);
+   save();
+  };
+
+  tools.append(up,down,edit,del);
+  a.append(tools);
+  root.append(a);
+ });
+}
+
+document.getElementById("add").onclick=()=>{
+ const n=prompt("Name des Schnellzugriffs");
+ if(!n)return;
+ const u=prompt("Adresse (https://...)");
+ if(!u)return;
+ if(!/^https?:\/\//i.test(u)){
+  alert("Bitte eine gültige HTTP(S)-Adresse eingeben.");
+  return;
+ }
+ links.push([n.trim(),u,n.trim().charAt(0).toUpperCase()]);
+ save();
+};
+
+document.getElementById("reset").onclick=()=>{
+ if(confirm("Schnellzugriffe auf Standard zurücksetzen?")){
+  links=defaults.map(x=>x.slice());
+  save();
+ }
+};
+
 document.getElementById("search").addEventListener("submit",function(e){
  e.preventDefault();
  const q=document.getElementById("query").value.trim();
  if(!q)return;
  const isUrl=/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(:[0-9]+)?(\/.*)?$/.test(q);
- location.href=isUrl?"https://"+q:"shadow-search://search/"+encodeURIComponent(q);
+ location.href=isUrl?"https://"+q:
+  "shadow-search://search/"+encodeURIComponent(q);
 });
+
+render();
 </script>
 </body>
 </html>

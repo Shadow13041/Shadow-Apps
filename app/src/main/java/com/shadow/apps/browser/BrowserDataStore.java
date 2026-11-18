@@ -1,7 +1,6 @@
 package com.shadow.apps.browser;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -34,18 +33,14 @@ public final class BrowserDataStore {
     }
 
     public static void addBookmark(Context c, String url, String title) {
-        add(c, "bookmarks", url, title, false);
+        addBookmark(c, url, title, "");
     }
 
-    public static void addHistory(Context c, String url, String title) {
-        add(c, "history", url, title, true);
-    }
-
-    private static void add(Context c, String key, String url,
-                            String title, boolean limit) {
+    public static void addBookmark(Context c, String url, String title,
+                                   String folder) {
         if (url == null || url.isEmpty()) return;
 
-        JSONArray old = read(c, key);
+        JSONArray old = read(c, "bookmarks");
         JSONArray result = new JSONArray();
 
         for (int i = 0; i < old.length(); i++) {
@@ -58,19 +53,43 @@ public final class BrowserDataStore {
         JSONObject entry = new JSONObject();
         try {
             entry.put("url", url);
-            entry.put("title", title == null || title.isEmpty()
-                    ? url : title);
+            entry.put("title", title == null || title.isEmpty() ? url : title);
+            entry.put("folder", folder == null ? "" : folder);
+            entry.put("time", System.currentTimeMillis());
+            result.put(entry);
+        } catch (Exception ignored) {}
+
+        write(c, "bookmarks", result);
+    }
+
+    public static void addHistory(Context c, String url, String title) {
+        if (url == null || url.isEmpty()) return;
+
+        JSONArray old = read(c, "history");
+        JSONArray result = new JSONArray();
+
+        for (int i = 0; i < old.length(); i++) {
+            JSONObject item = old.optJSONObject(i);
+            if (item != null && !url.equals(item.optString("url"))) {
+                result.put(item);
+            }
+        }
+
+        JSONObject entry = new JSONObject();
+        try {
+            entry.put("url", url);
+            entry.put("title", title == null || title.isEmpty() ? url : title);
             entry.put("time", System.currentTimeMillis());
             result.put(entry);
         } catch (Exception ignored) {}
 
         JSONArray saved = new JSONArray();
-        int start = limit ? Math.max(0, result.length() - MAX_HISTORY) : 0;
+        int start = Math.max(0, result.length() - MAX_HISTORY);
         for (int i = start; i < result.length(); i++) {
             saved.put(result.opt(i));
         }
 
-        write(c, key, saved);
+        write(c, "history", saved);
     }
 
     public static void removeBookmark(Context c, String url) {

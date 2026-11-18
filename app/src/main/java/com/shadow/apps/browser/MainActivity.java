@@ -58,6 +58,8 @@ public class MainActivity extends Activity {
     private final ArrayList<String> addressSuggestionUrls = new ArrayList<>();
     private final java.util.HashMap<WebView, String> readerOriginalUrls =
             new java.util.HashMap<>();
+    private final java.util.HashMap<WebView, String> tabGroups =
+            new java.util.HashMap<>();
 
     private WebView webView;
     private ValueCallback<Uri[]> fileChooserCallback;
@@ -245,6 +247,7 @@ public class MainActivity extends Activity {
     private void createTab(String url) {
         WebView newWebView = new WebView(this);
         tabs.add(newWebView);
+        tabGroups.put(newWebView, "");
         webContainer.addView(newWebView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.MATCH_PARENT));
@@ -286,6 +289,7 @@ public class MainActivity extends Activity {
         WebView closing = webView;
         tabs.remove(closing);
         readerOriginalUrls.remove(closing);
+        tabGroups.remove(closing);
         webContainer.removeView(closing);
 
         closing.stopLoading();
@@ -349,7 +353,9 @@ public class MainActivity extends Activity {
             String pageTitle = tab.getTitle();
             if (pageTitle == null || pageTitle.trim().isEmpty()) pageTitle = "Neuer Tab";
             TextView title = new TextView(this);
-            title.setText(pageTitle);
+            String group = tabGroups.get(tab);
+            title.setText((group == null || group.isEmpty())
+                    ? pageTitle : "[" + group + "] " + pageTitle);
             title.setTextColor(Color.WHITE);
             title.setTextSize(15);
             title.setTypeface(null, android.graphics.Typeface.BOLD);
@@ -375,6 +381,27 @@ public class MainActivity extends Activity {
             LinearLayout.LayoutParams actionsLp = new LinearLayout.LayoutParams(-1, -2);
             actionsLp.topMargin = dp(10);
             card.addView(actions, actionsLp);
+
+            card.setOnLongClickListener(v -> {
+                EditText input = new EditText(this);
+                input.setSingleLine(true);
+                input.setHint("Gruppenname");
+                input.setText(tabGroups.get(tab) == null
+                        ? "" : tabGroups.get(tab));
+
+                new AlertDialog.Builder(this)
+                        .setTitle("Tab-Gruppe")
+                        .setMessage("Tabs mit demselben Namen gehören zur gleichen Gruppe. Leer lassen zum Entfernen.")
+                        .setView(input)
+                        .setNegativeButton("Abbrechen", null)
+                        .setPositiveButton("Speichern", (d, w) -> {
+                            tabGroups.put(tab,
+                                    input.getText().toString().trim());
+                            dialog.dismiss();
+                            showTabOverview();
+                        }).show();
+                return true;
+            });
 
             card.setOnClickListener(v -> {
                 dialog.dismiss();
@@ -419,6 +446,7 @@ public class MainActivity extends Activity {
         boolean wasCurrent = closing == webView;
         tabs.remove(index);
         readerOriginalUrls.remove(closing);
+        tabGroups.remove(closing);
         webContainer.removeView(closing);
         closing.stopLoading();
         closing.setWebChromeClient(null);
@@ -454,6 +482,7 @@ public class MainActivity extends Activity {
         }
         tabs.clear();
         readerOriginalUrls.clear();
+        tabGroups.clear();
         webView = null;
         createTab(BrowserSettings.getHomepage(this));
         updateTabButton();
@@ -848,7 +877,8 @@ public class MainActivity extends Activity {
                 "Teilen",
                 "Desktopwebsite: " + (desktopMode ? "Ein" : "Aus"),
                 "Lesemodus",
-                "Website-Berechtigungen"
+                "Website-Berechtigungen",
+                "Tab-Gruppen verwalten"
         };
 
         new AlertDialog.Builder(this)
@@ -884,6 +914,11 @@ public class MainActivity extends Activity {
                         toggleReaderMode();
                     } else if (which == 11) {
                         SitePermissionDialog.show(this, webView);
+                    } else if (which == 12) {
+                        showTabOverview();
+                        Toast.makeText(this,
+                                "Tab lange drücken, um eine Gruppe zuzuordnen.",
+                                Toast.LENGTH_LONG).show();
                     } else if (which == 9) {
                         desktopMode = !desktopMode;
                         getSharedPreferences("shadow_browser", MODE_PRIVATE).edit().putBoolean("desktop_mode", desktopMode).apply();
@@ -1250,6 +1285,7 @@ private boolean handleInternalUrl(WebView view, String url) {
         }
         tabs.clear();
         readerOriginalUrls.clear();
+        tabGroups.clear();
         webView = null;
         super.onDestroy();
     }
