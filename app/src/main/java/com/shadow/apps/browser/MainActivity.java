@@ -252,6 +252,7 @@ public class MainActivity extends Activity {
                 .setTitle("Registerkarten · " + tabs.size())
                 .setView(scroll)
                 .setNegativeButton("Schließen", null)
+                .setNeutralButton("Alle schließen", (d, w) -> confirmCloseAllTabs())
                 .setPositiveButton("Neuer Tab", (d, w) -> createTab(BrowserSettings.getHomepage(this)))
                 .create();
 
@@ -360,6 +361,29 @@ public class MainActivity extends Activity {
             webView = null;
             switchTab(Math.min(index, tabs.size() - 1));
         }
+        updateTabButton();
+    }
+
+    private void confirmCloseAllTabs() {
+        new AlertDialog.Builder(this)
+                .setTitle("Alle Tabs schließen?")
+                .setMessage("Möchtest du wirklich alle geöffneten Tabs schließen? Ein neuer Tab mit deiner Startseite bleibt geöffnet.")
+                .setNegativeButton("Abbrechen", null)
+                .setPositiveButton("Alle schließen", (dialog, which) -> closeAllTabs())
+                .show();
+    }
+
+    private void closeAllTabs() {
+        for (WebView tab : new ArrayList<>(tabs)) {
+            tab.stopLoading();
+            tab.setWebChromeClient(null);
+            tab.setWebViewClient(null);
+            webContainer.removeView(tab);
+            tab.destroy();
+        }
+        tabs.clear();
+        webView = null;
+        createTab(BrowserSettings.getHomepage(this));
         updateTabButton();
     }
 
