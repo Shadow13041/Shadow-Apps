@@ -506,6 +506,30 @@ public class MainActivity extends Activity {
             }
 
             @Override
+            public void onReceivedError(WebView view,
+                    WebResourceRequest request,
+                    android.webkit.WebResourceError error) {
+                if (request.isForMainFrame()
+                        && view == webView
+                        && !request.isRedirect()) {
+                    Toast.makeText(MainActivity.this,
+                            "Webseite konnte nicht geladen werden. Internetverbindung prüfen.",
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onReceivedHttpError(WebView view,
+                    WebResourceRequest request,
+                    android.webkit.WebResourceResponse response) {
+                if (request.isForMainFrame() && view == webView) {
+                    Toast.makeText(MainActivity.this,
+                            "Webseitenfehler: HTTP " + response.getStatusCode(),
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
             public void onPageFinished(WebView view, String url) {
                 if (url != null) BrowserDataStore.addHistory(MainActivity.this, url, view.getTitle());
                 if (view == webView) {
@@ -516,7 +540,7 @@ public class MainActivity extends Activity {
         });
 
         target.setWebChromeClient(new WebChromeClient() {
-            \@Override
+            @Override
             public boolean onCreateWindow(WebView view, boolean isDialog,
                     boolean isUserGesture, Message resultMsg) {
                 WebView popup = new WebView(MainActivity.this);
@@ -544,13 +568,13 @@ public class MainActivity extends Activity {
                         return true;
                     }
 
-                    \@Override
+                    @Override
                     public boolean shouldOverrideUrlLoading(
                             WebView popupView, WebResourceRequest request) {
                         return openInNewTab(request.getUrl().toString());
                     }
 
-                    \@Override
+                    @Override
                     public boolean shouldOverrideUrlLoading(
                             WebView popupView, String url) {
                         return openInNewTab(url);
