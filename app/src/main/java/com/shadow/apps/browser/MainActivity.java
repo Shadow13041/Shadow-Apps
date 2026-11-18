@@ -102,7 +102,10 @@ public class MainActivity extends Activity {
             if (tabs.isEmpty()) {
                 createTab(BrowserSettings.getHomepage(this));
             } else {
-                int selected = savedInstanceState.getInt("shadow_selected_tab", 0);
+                int selected = savedInstanceState != null
+                        ? savedInstanceState.getInt("shadow_selected_tab", 0)
+                        : getSharedPreferences("shadow_browser", MODE_PRIVATE)
+                                .getInt("shadow_persistent_selected", 0);
                 switchTab(Math.max(0, Math.min(selected, tabs.size() - 1)));
             }
         }
@@ -534,13 +537,22 @@ public class MainActivity extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(
                     WebView view, WebResourceRequest request) {
-                return handleInternalUrl(view, request.getUrl().toString());
+                String url = request.getUrl().toString();
+                if (request.isForMainFrame()) {
+                    view.getSettings().setJavaScriptEnabled(
+                            SitePermissionStore.isJavaScriptAllowed(
+                                    MainActivity.this, url));
+                }
+                return handleInternalUrl(view, url);
             }
 
 
             
             @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                view.getSettings().setJavaScriptEnabled(
+                        SitePermissionStore.isJavaScriptAllowed(
+                                MainActivity.this, url));
                 return handleInternalUrl(view, url);
             }
 
@@ -603,7 +615,9 @@ public class MainActivity extends Activity {
                 }
 
                 WebView popup = new WebView(MainActivity.this);
-                popup.getSettings().setJavaScriptEnabled(true);
+                popup.getSettings().setJavaScriptEnabled(
+                        SitePermissionStore.isJavaScriptAllowed(
+                                MainActivity.this, view.getUrl()));
                 popup.getSettings().setDomStorageEnabled(true);
 
                 popup.setWebViewClient(new WebViewClient() {
