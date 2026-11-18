@@ -2,6 +2,7 @@ package com.shadow.apps.browser;
 
 import com.shadow.apps.R;
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -34,6 +35,8 @@ import android.webkit.WebView;
 import android.webkit.ValueCallback;
 import android.webkit.WebViewClient;
 import android.widget.Button;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ImageView;
@@ -52,6 +55,9 @@ public class MainActivity extends Activity {
     private static final int COLOR_ACCENT = Color.rgb(245, 245, 245);
 
     private final ArrayList<WebView> tabs = new ArrayList<>();
+    private final ArrayList<String> addressSuggestionUrls = new ArrayList<>();
+    private final java.util.HashMap<WebView, String> readerOriginalUrls =
+            new java.util.HashMap<>();
 
     private WebView webView;
     private ValueCallback<Uri[]> fileChooserCallback;
@@ -147,7 +153,8 @@ public class MainActivity extends Activity {
         addressBackground.setStroke(dp(1), Color.rgb(48, 48, 48));
         addressContainer.setBackground(addressBackground);
 
-        addressBar = new EditText(this);
+        addressBar = new AutoCompleteTextView(this);
+        ((AutoCompleteTextView) addressBar).setThreshold(1);
         addressBar.setSingleLine(true);
         addressBar.setTextIsSelectable(false);
         addressBar.setTextColor(Color.WHITE);
@@ -202,6 +209,31 @@ public class MainActivity extends Activity {
             return false;
         });
 
+        addressBar.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence text, int start,
+                    int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence text, int start,
+                    int before, int count) {
+                if (addressBar.hasFocus()) {
+                    updateAddressSuggestions(text.toString());
+                }
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable text) {}
+        });
+
+        ((AutoCompleteTextView) addressBar).setOnItemClickListener(
+                (parent, view, position, id) -> {
+                    if (position < addressSuggestionUrls.size()) {
+                        addressBar.setText(addressSuggestionUrls.get(position));
+                        navigateFromAddressBar();
+                    }
+                });
+
         refreshCustomButton();
         updateNavigationButtons();
     }
@@ -218,6 +250,8 @@ public class MainActivity extends Activity {
 
         webView = newWebView;
         configureWebView(newWebView);
+        newWebView.getSettings().setJavaScriptEnabled(
+                SitePermissionStore.isJavaScriptAllowed(this, url));
         newWebView.setVisibility(View.VISIBLE);
         addressBar.setText(displayAddress(url));
         updateTabButton();
@@ -246,6 +280,7 @@ public class MainActivity extends Activity {
         int index = tabs.indexOf(webView);
         WebView closing = webView;
         tabs.remove(closing);
+        readerOriginalUrls.remove(closing);
         webContainer.removeView(closing);
 
         closing.stopLoading();
@@ -510,6 +545,17 @@ public class MainActivity extends Activity {
             }
 
             @Override
+            public void onPageStarted(WebView view, String url,
+                    android.graphics.Bitmap favicon) {
+                if (url != null) {
+                    view.getSettings().setJavaScriptEnabled(
+                            SitePermissionStore.isJavaScriptAllowed(
+                                    MainActivity.this, url));
+                }
+                super.onPageStarted(view, url, favicon);
+            }
+
+            @Override
             public void onReceivedError(WebView view,
                     WebResourceRequest request,
                     android.webkit.WebResourceError error) {
@@ -548,6 +594,14 @@ public class MainActivity extends Activity {
             @Override
             public boolean onCreateWindow(WebView view, boolean isDialog,
                     boolean isUserGesture, Message resultMsg) {
+                if (!SitePermissionStore.arePopupsAllowed(
+                        MainActivity.this, view.getUrl())) {
+                    Toast.makeText(MainActivity.this,
+                            "Pop-ups für diese Website sind blockiert",
+                            Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+
                 WebView popup = new WebView(MainActivity.this);
                 popup.getSettings().setJavaScriptEnabled(true);
                 popup.getSettings().setDomStorageEnabled(true);
@@ -771,7 +825,9 @@ public class MainActivity extends Activity {
                 "Einstellungen",
                 "Auf Seite suchen",
                 "Teilen",
-                "Desktopwebsite: " + (desktopMode ? "Ein" : "Aus")
+                "Desktopwebsite: " + (desktopMode ? "Ein" : "Aus"),
+                "Lesemodus",
+                "Website-Berechtigungen"
         };
 
         new AlertDialog.Builder(this)
@@ -803,6 +859,10 @@ public class MainActivity extends Activity {
                         share.setType("text/plain");
                         share.putExtra(Intent.EXTRA_TEXT, webView.getUrl());
                         startActivity(Intent.createChooser(share, "Seite teilen"));
+                    } else if (which == 10) {
+                        toggleReaderMode();
+                    } else if (which == 11) {
+                        SitePermissionDialog.show(this, webView);
                     } else if (which == 9) {
                         desktopMode = !desktopMode;
                         getSharedPreferences("shadow_browser", MODE_PRIVATE).edit().putBoolean("desktop_mode", desktopMode).apply();
@@ -842,6 +902,115 @@ private boolean handleInternalUrl(WebView view, String url) {
             Toast.makeText(this, "Suche konnte nicht gestartet werden", Toast.LENGTH_SHORT).show();
         }
         return true;
+    }
+
+    private void updateAddressSuggestions(String query) {
+        String search = query == null ? "" : query.trim().toLowerCase();
+        addressSuggestionUrls.clear();
+
+        ArrayList<String> labels = new ArrayList<>();
+        if (search.isEmpty()) return;
+
+        JSONArray[] sources = {
+                BrowserDataStore.getHistory(this),
+                BrowserDataStore.getBookmarks(this)
+        };
+
+        for (JSONArray source : sources) {
+            for (int i = source.length() - 1; i >= 0; i--) {
+                JSONObject item = source.optJSONObject(i);
+                if (item == null) continue;
+
+                String url = item.optString("url", "");
+                String title = item.optString("title", url);
+
+                if (url.isEmpty()
+                        || !(title.toLowerCase().contains(search)
+                        || url.toLowerCase().contains(search))
+                        || addressSuggestionUrls.contains(url)) {
+                    continue;
+                }
+
+                addressSuggestionUrls.add(url);
+                labels.add(title + " · " + url);
+                if (labels.size() >= 8) break;
+            }
+            if (labels.size() >= 8) break;
+        }
+
+        AutoCompleteTextView input = (AutoCompleteTextView) addressBar;
+        input.setAdapter(new ArrayAdapter<>(this,
+                android.R.layout.simple_dropdown_item_1line, labels));
+
+        if (!labels.isEmpty() && input.hasFocus()) {
+            input.showDropDown();
+        } else {
+            input.dismissDropDown();
+        }
+    }
+
+    private void toggleReaderMode() {
+        if (webView == null || webView.getUrl() == null) return;
+
+        WebView target = webView;
+        String originalUrl = readerOriginalUrls.get(target);
+
+        if (originalUrl != null) {
+            readerOriginalUrls.remove(target);
+            target.loadUrl(originalUrl);
+            return;
+        }
+
+        final String sourceUrl = target.getUrl();
+
+        target.evaluateJavascript(
+                "(function(){return JSON.stringify({title:document.title,"
+                + "text:document.body?document.body.innerText:''});})()",
+                result -> {
+                    if (result == null || "null".equals(result)) return;
+
+                    try {
+                        JSONArray wrapper = new JSONArray("[" + result + "]");
+                        JSONObject data = wrapper.optJSONObject(0);
+                        if (data == null) return;
+
+                        String title = data.optString("title", "Lesemodus");
+                        String text = data.optString("text", "");
+                        if (text.trim().isEmpty()) {
+                            Toast.makeText(MainActivity.this,
+                                    "Kein lesbarer Text gefunden",
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        String html = "<!doctype html><html><head>"
+                                + "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
+                                + "<style>body{background:#090d12;color:#e8edf4;"
+                                + "font-family:sans-serif;line-height:1.75;"
+                                + "padding:24px;max-width:760px;margin:auto}"
+                                + "h1{font-size:25px;color:#55cfff}"
+                                + "pre{white-space:pre-wrap;font:inherit}</style>"
+                                + "</head><body><h1>" + escapeReaderHtml(title)
+                                + "</h1><pre>" + escapeReaderHtml(text)
+                                + "</pre></body></html>";
+
+                        readerOriginalUrls.put(target, sourceUrl);
+                        target.loadDataWithBaseURL(sourceUrl, html,
+                                "text/html", "UTF-8", null);
+                    } catch (Exception e) {
+                        Toast.makeText(MainActivity.this,
+                                "Lesemodus konnte nicht geöffnet werden",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private String escapeReaderHtml(String value) {
+        return value.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     private void navigateFromAddressBar() {
@@ -1059,6 +1228,7 @@ private boolean handleInternalUrl(WebView view, String url) {
             tab.destroy();
         }
         tabs.clear();
+        readerOriginalUrls.clear();
         webView = null;
         super.onDestroy();
     }
