@@ -23,12 +23,14 @@ public final class SitePermissionDialog {
 
         boolean[] checked = {
                 SitePermissionStore.isJavaScriptAllowed(activity, url),
-                SitePermissionStore.arePopupsAllowed(activity, url)
+                SitePermissionStore.arePopupsAllowed(activity, url),
+                SitePermissionStore.areImagesAllowed(activity, url)
         };
 
         String[] options = {
                 "JavaScript erlauben",
-                "Pop-ups erlauben"
+                "Pop-ups erlauben",
+                "Bilder laden"
         };
 
         new AlertDialog.Builder(activity)
@@ -43,10 +45,16 @@ public final class SitePermissionDialog {
                             activity, url, checked[0]);
                     SitePermissionStore.setPopupsAllowed(
                             activity, url, checked[1]);
+                    boolean oldImages =
+                            SitePermissionStore.areImagesAllowed(activity, url);
+                    SitePermissionStore.setImagesAllowed(
+                            activity, url, checked[2]);
 
                     webView.getSettings().setJavaScriptEnabled(checked[0]);
+                    webView.getSettings().setBlockNetworkImage(!checked[2]);
 
-                    if (oldJavaScript != checked[0]) {
+                    if (oldJavaScript != checked[0]
+                            || oldImages != checked[2]) {
                         webView.reload();
                     }
 

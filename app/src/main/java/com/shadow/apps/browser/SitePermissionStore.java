@@ -37,6 +37,20 @@ public final class SitePermissionStore {
                 .getBoolean(key, false);
     }
 
+    public static boolean areImagesAllowed(Context context, String url) {
+        String key = key(url, "images");
+        return key == null || context.getSharedPreferences(PREFS, 0)
+                .getBoolean(key, true);
+    }
+
+    public static void setImagesAllowed(
+            Context context, String url, boolean allowed) {
+        String key = key(url, "images");
+        if (key == null) return;
+        context.getSharedPreferences(PREFS, 0).edit()
+                .putBoolean(key, allowed).apply();
+    }
+
     public static void setPopupsAllowed(
             Context context, String url, boolean allowed) {
         String key = key(url, "popups");

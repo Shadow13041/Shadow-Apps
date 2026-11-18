@@ -255,6 +255,8 @@ public class MainActivity extends Activity {
         configureWebView(newWebView);
         newWebView.getSettings().setJavaScriptEnabled(
                 SitePermissionStore.isJavaScriptAllowed(this, url));
+        newWebView.getSettings().setBlockNetworkImage(
+                !SitePermissionStore.areImagesAllowed(this, url));
         newWebView.setVisibility(View.VISIBLE);
         addressBar.setText(displayAddress(url));
         updateTabButton();
@@ -416,6 +418,7 @@ public class MainActivity extends Activity {
         WebView closing = tabs.get(index);
         boolean wasCurrent = closing == webView;
         tabs.remove(index);
+        readerOriginalUrls.remove(closing);
         webContainer.removeView(closing);
         closing.stopLoading();
         closing.setWebChromeClient(null);
@@ -450,6 +453,7 @@ public class MainActivity extends Activity {
             tab.destroy();
         }
         tabs.clear();
+        readerOriginalUrls.clear();
         webView = null;
         createTab(BrowserSettings.getHomepage(this));
         updateTabButton();
@@ -562,6 +566,9 @@ public class MainActivity extends Activity {
                 if (url != null) {
                     view.getSettings().setJavaScriptEnabled(
                             SitePermissionStore.isJavaScriptAllowed(
+                                    MainActivity.this, url));
+                    view.getSettings().setBlockNetworkImage(
+                            !SitePermissionStore.areImagesAllowed(
                                     MainActivity.this, url));
                 }
                 super.onPageStarted(view, url, favicon);
