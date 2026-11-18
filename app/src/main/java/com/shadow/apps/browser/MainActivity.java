@@ -1,6 +1,7 @@
 package com.shadow.apps.browser;
 
 import com.shadow.apps.R;
+import org.json.JSONArray;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -80,6 +81,9 @@ public class MainActivity extends Activity {
 
         ArrayList<String> savedTabs = savedInstanceState == null
                 ? null : savedInstanceState.getStringArrayList("shadow_saved_tabs");
+        if (savedTabs == null) {
+            savedTabs = loadSession();
+        }
         if (savedTabs == null || savedTabs.isEmpty()) {
             createTab(BrowserSettings.getHomepage(this));
         } else {
@@ -532,6 +536,7 @@ public class MainActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 if (url != null) BrowserDataStore.addHistory(MainActivity.this, url, view.getTitle());
+                saveSession();
                 if (view == webView) {
                     addressBar.setText(displayAddress(url));
                     updateNavigationButtons();
@@ -973,6 +978,39 @@ private boolean handleInternalUrl(WebView view, String url) {
         }
     }
 
+    private void saveSession() {
+        JSONArray saved = new JSONArray();
+        for (WebView tab : tabs) {
+            String url = tab.getUrl();
+            if (url != null && (url.startsWith("https://")
+                    || url.startsWith("http://"))) {
+                saved.put(url);
+            }
+        }
+        getSharedPreferences("shadow_browser", MODE_PRIVATE).edit()
+                .putString("shadow_persistent_tabs", saved.toString())
+                .putInt("shadow_persistent_selected",
+                        Math.max(0, tabs.indexOf(webView)))
+                .apply();
+    }
+
+    private ArrayList<String> loadSession() {
+        ArrayList<String> result = new ArrayList<>();
+        try {
+            String data = getSharedPreferences("shadow_browser", MODE_PRIVATE)
+                    .getString("shadow_persistent_tabs", "[]");
+            JSONArray saved = new JSONArray(data);
+            for (int i = 0; i < saved.length(); i++) {
+                String url = saved.optString(i, "");
+                if (url.startsWith("https://") || url.startsWith("http://")) {
+                    result.add(url);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return result;
+    }
+
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -1007,6 +1045,7 @@ private boolean handleInternalUrl(WebView view, String url) {
 
     @Override
     protected void onDestroy() {
+        saveSession();
         hideFullscreenVideo();
         if (fileChooserCallback != null) {
             fileChooserCallback.onReceiveValue(null);
