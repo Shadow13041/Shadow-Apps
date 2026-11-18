@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.os.Message;
 import android.os.Build;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -434,7 +435,7 @@ public class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(false);
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
-        settings.setSupportMultipleWindows(false);
+        settings.setSupportMultipleWindows(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             settings.setSafeBrowsingEnabled(PrivacySettings.safeBrowsing(this));
@@ -497,6 +498,55 @@ public class MainActivity extends Activity {
         });
 
         target.setWebChromeClient(new WebChromeClient() {
+            \@Override
+            public boolean onCreateWindow(WebView view, boolean isDialog,
+                    boolean isUserGesture, Message resultMsg) {
+                WebView popup = new WebView(MainActivity.this);
+                popup.getSettings().setJavaScriptEnabled(true);
+                popup.getSettings().setDomStorageEnabled(true);
+
+                popup.setWebViewClient(new WebViewClient() {
+                    private boolean opened;
+
+                    private boolean openInNewTab(String url) {
+                        if (opened || url == null
+                                || !(url.startsWith("https://")
+                                || url.startsWith("http://"))) {
+                            return false;
+                        }
+                        opened = true;
+                        createTab(url);
+                        popup.stopLoading();
+                        popup.postDelayed(() -> {
+                            try {
+                                popup.destroy();
+                            } catch (Exception ignored) {
+                            }
+                        }, 100);
+                        return true;
+                    }
+
+                    \@Override
+                    public boolean shouldOverrideUrlLoading(
+                            WebView popupView, WebResourceRequest request) {
+                        return openInNewTab(request.getUrl().toString());
+                    }
+
+                    \@Override
+                    public boolean shouldOverrideUrlLoading(
+                            WebView popupView, String url) {
+                        return openInNewTab(url);
+                    }
+                });
+
+                WebView.WebViewTransport transport =
+                        (WebView.WebViewTransport) resultMsg.obj;
+                transport.setWebView(popup);
+                resultMsg.sendToTarget();
+                return true;
+            }
+
+
             @Override
             public boolean onShowFileChooser(WebView view,
                     ValueCallback<Uri[]> filePathCallback,
