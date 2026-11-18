@@ -50,6 +50,8 @@ public class MainActivity extends Activity {
     private final ArrayList<WebView> tabs = new ArrayList<>();
 
     private WebView webView;
+    private boolean desktopMode;
+    private String mobileUserAgent;
     private LinearLayout webContainer;
     private EditText addressBar;
     private ProgressBar progressBar;
@@ -65,6 +67,7 @@ public class MainActivity extends Activity {
         getWindow().setStatusBarColor(COLOR_BACKGROUND);
         getWindow().setNavigationBarColor(COLOR_BACKGROUND);
         setTitle("");
+        desktopMode = getSharedPreferences("shadow_browser", MODE_PRIVATE).getBoolean("desktop_mode", false);
         buildInterface();
         createTab(BrowserSettings.getHomepage(this));
     }
@@ -385,6 +388,8 @@ public class MainActivity extends Activity {
             }
         });
         WebSettings settings = target.getSettings();
+        if (mobileUserAgent == null) mobileUserAgent = settings.getUserAgentString();
+        settings.setUserAgentString(desktopMode ? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" : mobileUserAgent);
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setLoadWithOverviewMode(true);
@@ -576,7 +581,8 @@ public class MainActivity extends Activity {
                 "Datenschutz",
                 "Einstellungen",
                 "Auf Seite suchen",
-                "Teilen"
+                "Teilen",
+                "Desktopwebsite: " + (desktopMode ? "Ein" : "Aus")
         };
 
         new AlertDialog.Builder(this)
@@ -608,6 +614,15 @@ public class MainActivity extends Activity {
                         share.setType("text/plain");
                         share.putExtra(Intent.EXTRA_TEXT, webView.getUrl());
                         startActivity(Intent.createChooser(share, "Seite teilen"));
+                    } else if (which == 9) {
+                        desktopMode = !desktopMode;
+                        getSharedPreferences("shadow_browser", MODE_PRIVATE).edit().putBoolean("desktop_mode", desktopMode).apply();
+                        for (WebView tab : tabs) {
+                            WebSettings ws = tab.getSettings();
+                            if (mobileUserAgent == null) mobileUserAgent = ws.getUserAgentString();
+                            ws.setUserAgentString(desktopMode ? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" : mobileUserAgent);
+                        }
+                        if (webView != null) webView.reload();
                     }
                 })
                 .show();
