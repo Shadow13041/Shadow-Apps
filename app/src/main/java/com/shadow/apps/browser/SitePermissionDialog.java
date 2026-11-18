@@ -1,68 +1,77 @@
 package com.shadow.apps.browser;
 
-import android.app.Activity;
 import android.app.AlertDialog;
-import android.net.Uri;
-import android.webkit.WebView;
-import android.widget.Toast;
+import android.content.Context;
+import android.widget.CheckBox;
+import android.widget.LinearLayout;
 
 public final class SitePermissionDialog {
     private SitePermissionDialog() {}
 
-    public static void show(Activity activity, WebView webView) {
-        if (webView == null || webView.getUrl() == null) return;
+    public static void show(Context context, String url,
+                            android.webkit.WebView webView) {
+        LinearLayout layout = new LinearLayout(context);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int padding = (int) (16 * context.getResources()
+                .getDisplayMetrics().density);
+        layout.setPadding(padding, padding, padding, padding);
 
-        String url = webView.getUrl();
-        String host = Uri.parse(url).getHost();
+        CheckBox javascript = new CheckBox(context);
+        javascript.setText("JavaScript erlauben");
+        javascript.setChecked(
+                SitePermissionStore.isJavaScriptAllowed(context, url));
 
-        if (host == null) {
-            Toast.makeText(activity, "Keine Website erkannt",
-                    Toast.LENGTH_SHORT).show();
-            return;
-        }
+        CheckBox popups = new CheckBox(context);
+        popups.setText("Pop-ups erlauben");
+        popups.setChecked(
+                SitePermissionStore.arePopupsAllowed(context, url));
 
-        boolean[] checked = {
-                SitePermissionStore.isJavaScriptAllowed(activity, url),
-                SitePermissionStore.arePopupsAllowed(activity, url),
-                SitePermissionStore.areImagesAllowed(activity, url)
-        };
+        CheckBox images = new CheckBox(context);
+        images.setText("Bilder erlauben");
+        images.setChecked(
+                SitePermissionStore.areImagesAllowed(context, url));
 
-        String[] options = {
-                "JavaScript erlauben",
-                "Pop-ups erlauben",
-                "Bilder laden"
-        };
+        CheckBox location = new CheckBox(context);
+        location.setText("Standortzugriff erlauben");
+        location.setChecked(
+                SitePermissionStore.isLocationAllowed(context, url));
 
-        new AlertDialog.Builder(activity)
-                .setTitle("Berechtigungen · " + host)
-                .setMultiChoiceItems(options, checked,
-                        (dialog, which, enabled) -> checked[which] = enabled)
+        CheckBox camera = new CheckBox(context);
+        camera.setText("Kamerazugriff erlauben");
+        camera.setChecked(
+                SitePermissionStore.isCameraAllowed(context, url));
+
+        layout.addView(javascript);
+        layout.addView(popups);
+        layout.addView(images);
+        layout.addView(location);
+        layout.addView(camera);
+
+        new AlertDialog.Builder(context)
+                .setTitle("Website-Berechtigungen")
+                .setMessage(url)
+                .setView(layout)
+                .setNegativeButton("Abbrechen", null)
                 .setPositiveButton("Speichern", (dialog, which) -> {
-                    boolean oldJavaScript =
-                            SitePermissionStore.isJavaScriptAllowed(activity, url);
-
                     SitePermissionStore.setJavaScriptAllowed(
-                            activity, url, checked[0]);
+                            context, url, javascript.isChecked());
                     SitePermissionStore.setPopupsAllowed(
-                            activity, url, checked[1]);
-                    boolean oldImages =
-                            SitePermissionStore.areImagesAllowed(activity, url);
+                            context, url, popups.isChecked());
                     SitePermissionStore.setImagesAllowed(
-                            activity, url, checked[2]);
+                            context, url, images.isChecked());
+                    SitePermissionStore.setLocationAllowed(
+                            context, url, location.isChecked());
+                    SitePermissionStore.setCameraAllowed(
+                            context, url, camera.isChecked());
 
-                    webView.getSettings().setJavaScriptEnabled(checked[0]);
-                    webView.getSettings().setBlockNetworkImage(!checked[2]);
-
-                    if (oldJavaScript != checked[0]
-                            || oldImages != checked[2]) {
+                    if (webView != null) {
+                        webView.getSettings().setJavaScriptEnabled(
+                                javascript.isChecked());
+                        webView.getSettings().setBlockNetworkImage(
+                                !images.isChecked());
                         webView.reload();
                     }
-
-                    Toast.makeText(activity,
-                            "Website-Berechtigungen gespeichert",
-                            Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton("Abbrechen", null)
                 .show();
     }
 }

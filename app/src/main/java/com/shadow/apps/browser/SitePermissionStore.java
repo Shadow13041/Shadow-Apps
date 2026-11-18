@@ -1,9 +1,8 @@
 package com.shadow.apps.browser;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.Uri;
-
-import java.util.Locale;
 
 public final class SitePermissionStore {
     private static final String PREFS = "shadow_site_permissions";
@@ -11,51 +10,60 @@ public final class SitePermissionStore {
     private SitePermissionStore() {}
 
     private static String key(String url, String permission) {
-        if (url == null) return null;
-        String host = Uri.parse(url).getHost();
-        if (host == null || host.isEmpty()) return null;
-        return host.toLowerCase(Locale.ROOT) + "." + permission;
+        String host = Uri.parse(url == null ? "" : url).getHost();
+        if (host == null || host.isEmpty()) host = "unknown";
+        return host.toLowerCase() + "_" + permission;
     }
 
-    public static boolean isJavaScriptAllowed(Context context, String url) {
-        String key = key(url, "javascript");
-        return key == null || context.getSharedPreferences(PREFS, 0)
-                .getBoolean(key, true);
+    private static boolean get(Context context, String url,
+                               String permission, boolean fallback) {
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getBoolean(key(url, permission), fallback);
     }
 
-    public static void setJavaScriptAllowed(
-            Context context, String url, boolean allowed) {
-        String key = key(url, "javascript");
-        if (key == null) return;
-        context.getSharedPreferences(PREFS, 0).edit()
-                .putBoolean(key, allowed).apply();
+    private static void set(Context context, String url,
+                            String permission, boolean value) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .edit().putBoolean(key(url, permission), value).apply();
     }
 
-    public static boolean arePopupsAllowed(Context context, String url) {
-        String key = key(url, "popups");
-        return key != null && context.getSharedPreferences(PREFS, 0)
-                .getBoolean(key, false);
+    public static boolean isJavaScriptAllowed(Context c, String u) {
+        return get(c, u, "javascript", true);
     }
 
-    public static boolean areImagesAllowed(Context context, String url) {
-        String key = key(url, "images");
-        return key == null || context.getSharedPreferences(PREFS, 0)
-                .getBoolean(key, true);
+    public static void setJavaScriptAllowed(Context c, String u, boolean v) {
+        set(c, u, "javascript", v);
     }
 
-    public static void setImagesAllowed(
-            Context context, String url, boolean allowed) {
-        String key = key(url, "images");
-        if (key == null) return;
-        context.getSharedPreferences(PREFS, 0).edit()
-                .putBoolean(key, allowed).apply();
+    public static boolean arePopupsAllowed(Context c, String u) {
+        return get(c, u, "popups", false);
     }
 
-    public static void setPopupsAllowed(
-            Context context, String url, boolean allowed) {
-        String key = key(url, "popups");
-        if (key == null) return;
-        context.getSharedPreferences(PREFS, 0).edit()
-                .putBoolean(key, allowed).apply();
+    public static void setPopupsAllowed(Context c, String u, boolean v) {
+        set(c, u, "popups", v);
+    }
+
+    public static boolean areImagesAllowed(Context c, String u) {
+        return get(c, u, "images", true);
+    }
+
+    public static void setImagesAllowed(Context c, String u, boolean v) {
+        set(c, u, "images", v);
+    }
+
+    public static boolean isLocationAllowed(Context c, String u) {
+        return get(c, u, "location", false);
+    }
+
+    public static void setLocationAllowed(Context c, String u, boolean v) {
+        set(c, u, "location", v);
+    }
+
+    public static boolean isCameraAllowed(Context c, String u) {
+        return get(c, u, "camera", false);
+    }
+
+    public static void setCameraAllowed(Context c, String u, boolean v) {
+        set(c, u, "camera", v);
     }
 }

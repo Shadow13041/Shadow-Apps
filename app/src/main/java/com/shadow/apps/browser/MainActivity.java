@@ -955,7 +955,9 @@ public class MainActivity extends Activity {
                 "Website-Berechtigungen",
                 "Tab-Gruppen verwalten",
                 "Website-Informationen",
-                "Offline-Archive"
+                "Offline-Archive",
+                "Backup erstellen",
+                "Backup wiederherstellen"
         };
 
         new AlertDialog.Builder(this)
@@ -964,10 +966,8 @@ public class MainActivity extends Activity {
                         createTab(BrowserSettings.getHomepage(this));
                     } else if (which == 1) {
                         if (webView != null && webView.getUrl() != null) {
-                            BrowserDataStore.addBookmark(
-                                    this, webView.getUrl(), webView.getTitle());
-                            Toast.makeText(this, "Lesezeichen gespeichert",
-                                    Toast.LENGTH_SHORT).show();
+                            BrowserDataStore.addBookmark(this, webView.getUrl(), webView.getTitle());
+                            Toast.makeText(this, "Lesezeichen gespeichert", Toast.LENGTH_SHORT).show();
                         }
                     } else if (which == 2) {
                         BrowserDataDialogs.show(this, webView, false);
@@ -981,25 +981,11 @@ public class MainActivity extends Activity {
                         SettingsDialogs.show(this);
                     } else if (which == 7) {
                         FindInPageDialog.show(this, webView);
-                    } else if (which == 8 && webView != null
-                            && webView.getUrl() != null) {
+                    } else if (which == 8 && webView != null && webView.getUrl() != null) {
                         Intent share = new Intent(Intent.ACTION_SEND);
                         share.setType("text/plain");
                         share.putExtra(Intent.EXTRA_TEXT, webView.getUrl());
                         startActivity(Intent.createChooser(share, "Seite teilen"));
-                    } else if (which == 10) {
-                        toggleReaderMode();
-                    } else if (which == 11) {
-                        SitePermissionDialog.show(this, webView);
-                    } else if (which == 12) {
-                        showTabOverview();
-                        Toast.makeText(this,
-                                "Tab lange drücken, um eine Gruppe zuzuordnen.",
-                                Toast.LENGTH_LONG).show();
-                    } else if (which == 13) {
-                        SiteInfoDialog.show(this, webView);
-                    } else if (which == 14) {
-                        ArchiveDialogs.show(this, webView);
                     } else if (which == 9) {
                         desktopMode = !desktopMode;
                         getSharedPreferences("shadow_browser", MODE_PRIVATE).edit().putBoolean("desktop_mode", desktopMode).apply();
@@ -1007,6 +993,26 @@ public class MainActivity extends Activity {
                             WebSettings ws = tab.getSettings();
                             if (mobileUserAgent == null) mobileUserAgent = ws.getUserAgentString();
                             ws.setUserAgentString(desktopMode ? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" : mobileUserAgent);
+                        }
+                        if (webView != null) webView.reload();
+                    } else if (which == 10) {
+                        toggleReaderMode();
+                    } else if (which == 11) {
+                        SitePermissionDialog.show(this, webView);
+                    } else if (which == 12) {
+                        showTabOverview();
+                        Toast.makeText(this, "Tab lange drücken, um eine Gruppe zuzuordnen.", Toast.LENGTH_LONG).show();
+                    } else if (which == 13) {
+                        SiteInfoDialog.show(this, webView);
+                    } else if (which == 14) {
+                        ArchiveDialogs.show(this, webView);
+                    } else if (which == 15) {
+                        BrowserBackup.chooseExport(this);
+                    } else if (which == 16) {
+                        BrowserBackup.chooseImport(this);
+                    }
+                })
+                .show();
                         }
                         if (webView != null) webView.reload();
                     }
